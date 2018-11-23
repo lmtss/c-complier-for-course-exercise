@@ -1,0 +1,232 @@
+#include "lex.h"
+#include "token.h"
+#include<cstdio>
+#include<iostream>
+Lex::Lex() {
+	initTable();
+	initFunc();
+
+	curState = LexState::Start;
+	bufPos = 0;
+	needBack = false;
+	yylineno = 0;
+}
+
+Lex::~Lex() {
+}
+
+void Lex::setFP(FILE *f) {
+	fp = f;
+}
+
+void Lex::initTable() {
+	// Start
+	for (int i = 'a'; i <= 'z'; i++)
+		table[0][i] = LexState::ID;
+	for (int i = 'A'; i <= 'Z'; i++)
+		table[0][i] = LexState::ID;
+	for (int i = '0'; i <= '9'; i++)
+		table[0][i] = LexState::digit_1;
+
+	table[0]['i'] = LexState::int_1;
+	table[0]['c'] = LexState::char_1;
+	table[0]['f'] = LexState::float_1;
+	table[0]['r'] = LexState::return_1;
+	table[0]['b'] = LexState::bool_1;
+	table[0]['w'] = LexState::while_1;
+	table[0]['v'] = LexState::void_1;
+
+	table[0]['\''] = LexState::char_const_1;
+
+	table[0][' '] = LexState::Start;
+
+	table[0]['{'] = LexState::LCB;
+	table[0]['}'] = LexState::RCB;
+	table[0]['('] = LexState::LB;
+	table[0][')'] = LexState::RB;
+	table[0]['['] = LexState::LSB;
+	table[0][']'] = LexState::RSB;
+	table[0]['.'] = LexState::dot;
+	table[0][';'] = LexState::semicolon;
+	table[0][','] = LexState::comma;
+	table[0]['='] = LexState::equal_1;
+
+	table[0]['>'] = LexState::greater_1;
+	table[0]['<'] = LexState::less_1;
+
+	table[0]['*'] = LexState::multiply;
+	table[0]['/'] = LexState::divide;
+	table[0]['+'] = LexState::add;
+	table[0]['-'] = LexState::substract;
+
+	// key
+	for (int j = (int)LexState::int_1; j < (int)LexState::bool_4; j++) {
+		for (int i = 'a'; i <= 'z'; i++)
+			table[j][i] = LexState::ID;
+		for (int i = 'A'; i <= 'Z'; i++)
+			table[j][i] = LexState::ID;
+		for (int i = '0'; i <= '9'; i++)
+			table[j][i] = LexState::ID;
+		for (int i = ' '; i <= '/'; i++)
+			table[j][i] = LexState::identifier;
+		for (int i = ':'; i <= '@'; i++)
+			table[j][i] = LexState::identifier;
+		for (int i = '['; i <= '`'; i++)
+			table[j][i] = LexState::identifier;
+		for (int i = '{'; i <= '~'; i++)
+			table[j][i] = LexState::identifier;
+	}
+
+	// int_k
+
+	_setK(LexState::int_1, "nt", LexState::int_k);
+
+	// float_k
+
+	_setK(LexState::float_1, "loat", LexState::float_k);
+
+	// char_k
+	_setK(LexState::char_1, "har", LexState::char_k);
+	// bool_k
+	_setK(LexState::bool_1, "ool", LexState::bool_k);
+
+	_setK(LexState::return_1, "eturn", LexState::return_k);
+
+	_setK(LexState::while_1, "hile", LexState::while_k);
+
+	_setK(LexState::void_1, "oid", LexState::void_k);
+
+	table[(int)LexState::int_1]['f'] = LexState::if_2;
+	_setKTI(LexState::if_2, LexState::if_k);
+	table[(int)LexState::float_1]['o'] = LexState::for_2;
+	table[(int)LexState::for_2]['r'] = LexState::for_3;
+	_setKTI(LexState::for_3, LexState::for_k);
+
+	//
+	_setKTI(LexState::ID, LexState::identifier);
+	_meetLetter(LexState::ID, LexState::ID);
+	_meetDigit(LexState::ID, LexState::ID);
+	//
+
+	_meetDigit(LexState::digit_1, LexState::digit_1);
+	_meetDigit(LexState::digit_2, LexState::digit_2);
+	_meetLetter(LexState::digit_1, LexState::error);
+	_meetLetter(LexState::digit_2, LexState::error);
+	_setKTI(LexState::digit_1, LexState::int_const);
+	table[(int)LexState::digit_1]['.'] = LexState::digit_2;
+	_setKTI(LexState::digit_2, LexState::float_const);
+
+	// =
+	
+	for (int i = ' '; i < '~'; i++) {
+		table[(int)LexState::equal_1][i] = LexState::assign;
+		table[(int)LexState::less_1][i] = LexState::less;
+		table[(int)LexState::greater_1][i] = LexState::greater;
+	}
+		
+	table[(int)LexState::equal_1]['='] = LexState::double_equal;
+	table[(int)LexState::less_1]['='] = LexState::less_equal;
+	table[(int)LexState::greater_1]['='] = LexState::greater_equal;
+}
+
+void Lex::initFunc() {
+	void(*f)() = [] {};
+	for (int i = 0; i < 50; i++)
+		func[i] = f;
+
+	//
+	//func[Token::int_const] = [] {printf("INTC"); };
+	func[Token::LCB] = [] {};
+	func[Token::RCB] = [] {  };
+	func[Token::add] = [] {lexVal = new ASTNode(ASTType::AST_add, 0, yylineno); };
+	func[Token::substract] = [] {lexVal = new ASTNode(ASTType::AST_sub, 0, yylineno); };
+	func[Token::multiply] = [] {lexVal = new ASTNode(ASTType::AST_mult, 0, yylineno); };
+	func[Token::divide] = [] {lexVal = new ASTNode(ASTType::AST_div, 0, yylineno); };
+	//func[Token::su] = [] {};
+	func[Token::identifier] = [] {lexVal = new ASTNode(ASTType::AST_identifier, 0, yylineno); };
+	func[Token::int_k] = [] {lexVal = new ASTNode(ASTType::AST_int_k, 0, yylineno); };
+	func[Token::float_k] = [] {lexVal = new ASTNode(ASTType::AST_float_k, 0, yylineno); };
+	func[Token::int_const] = [] {lexVal = new ASTNode(ASTType::AST_int_const, 0, yylineno); };
+	func[Token::float_const] = [] {lexVal = new ASTNode(ASTType::AST_float_const, 0, yylineno); };
+
+}
+
+void Lex::_meetDigit(LexState s, LexState f) {
+	for (int i = '0'; i <= '9'; i++)
+		table[(int)s][i] = f;
+}
+void Lex::_meetLetter(LexState s, LexState f) {
+	for (int i = 'a'; i <= 'z'; i++)
+		table[(int)s][i] = f;
+	for (int i = 'A'; i <= 'Z'; i++)
+		table[(int)s][i] = f;
+}
+void Lex::_setKTI(LexState s, LexState f) {
+	for (int i = ' '; i <= '/'; i++)
+		table[(int)s][i] = f;
+	for (int i = ':'; i <= '@'; i++)
+		table[(int)s][i] = f;
+	for (int i = '['; i <= '`'; i++)
+		table[(int)s][i] = f;
+	for (int i = '{'; i <= '~'; i++)
+		table[(int)s][i] = f;
+}
+void Lex::_setK(LexState k_1, std::string s, LexState k) {
+	int len = s.length();
+	for (int i = 0; i < len; i++) {
+		table[(int)k_1 + i][s[i]] = (LexState)((int)k_1 + i + 1);
+	}
+	_setKTI((LexState)((int)k_1 + len), (LexState)(int)k);
+}
+Token Lex::lex() {
+
+	char c;
+	curState = LexState::Start;
+	bufPos = 0;
+	while ((c = getC()) != EOF) {
+		if (c == '\n') {
+			yylineno++;
+			continue;
+		}
+		if (c == '\t')
+			c = ' ';
+		LexState res = table[(int)curState][c];
+		if ((int)res >= 100 && (int)res < 200) {
+			if ((int)res < 120 || (int)res >= 133) {
+				needBack = true;
+				charBack = c;
+				yytext[bufPos] = '\0';
+			}
+			else {
+				yytext[bufPos] = c;
+				yytext[bufPos + 1] = '\0';
+			}
+			
+			//printf("%s", yytext);
+
+			Token t = (Token)((int)res - 100);
+			//std::cout << (int)t;
+			func[t]();
+
+			return t;
+		}
+		else {
+			if (c != ' ') {
+				yytext[bufPos] = c;
+				bufPos++;
+			}
+			
+			curState = res;
+		}
+		
+	}
+	return Token::END;
+}
+int Lex::getC() {
+	if (needBack) {
+		needBack = false;
+		return charBack;
+	}
+	else
+		return fgetc(fp);
+}
