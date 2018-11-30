@@ -23,7 +23,7 @@ void IRCreator::expState() {
 
 void IRCreator::funcExpect() {
 
-	int type_spec_index = sp_top();
+	int type_spec_index = sp_get(1);
 	SSNode *type_spec = ss_get(type_spec_index), *id = ss_get(type_spec_index + 1);
 
 	FuncNode *func = new FuncNode;

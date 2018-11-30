@@ -1,9 +1,9 @@
 #include "parse.h"
 #include "ScopeExpect.h"
 #include <iostream>
-
+Token error_expect_token;
 #define HE(s) if(s == false) { std::cout << "FUCK" << std::endl; irc->ss_wrong_re(); return false;}
-#define expect(t) if(get_token() != t) { std::cout << "expect token " << (int)t << " get "  << std::endl; return false;}
+#define expect(t) if(  (error_expect_token = get_token()) != t) { std::cout << "expect token " << (int)t << " get " << (int)error_expect_token  << std::endl; return false;}
 
 void Parser::parse_translation_unit() {
 	bool meetLCB = false, meetAssign = false;
@@ -192,6 +192,7 @@ bool Parser::parse_param_decl() {
 }
 
 bool Parser::parse_compound_state() {
+	irc->new_sp();
 	expect(Token::LCB);
 	sp->meetCurlyBrace();
 	Token t;
@@ -211,6 +212,7 @@ bool Parser::parse_compound_state() {
 	
 	expect(Token::RCB);
 	irc->meetRCB();
+	irc->pop_sp();
 	return true;
 }
 
@@ -241,7 +243,7 @@ bool Parser::parse_state() {
 
 bool Parser::parse_return_state() {
 	irc->new_sp();
-	HE(parse_additive_exp());
+	HE(parse_assign_exp());
 	expect(Token::semicolon);
 	HE(irc->handle_return_state());
 
@@ -289,33 +291,31 @@ bool Parser::parse_assign_exp() {
 
 	irc->new_sp();
 
-	/*if (expect_token() == Token::LB) {
-		HE(parse_assign_exp());
-		expect(Token::RB);
-		
-	}
-	else {
-		expect_clear();
-		
-	}*/
+	bool is_lb = false;
 	Token ret;
-	//bool flag = true;
 	while (true) {
 		ret = expect_token();
-		if (ret == Token::comma || ret == Token::semicolon) {// assign_right
+		if (ret == Token::LB) {
+			is_lb = true;
+		}
+		else if (ret == Token::RB) {
+			is_lb = false;
+		}
+		else if (ret == Token::comma || ret == Token::semicolon) {// assign_right
 			expect_clear();
 
 			HE(parse_additive_exp());
 
 			break;
 		}
-		else if (ret == Token::assign) {// assign_left
+		else if (ret == Token::assign && !is_lb) {// assign_left
 			expect_clear();
 			HE(parse_assign_left());
 
 			expect(Token::assign);
 		}
 	}
+	
 	
 
 	HE(irc->handle_assign_exp());

@@ -207,14 +207,17 @@ public:
 	void new_sp() {
 		ss_sp_stack[ss_sp_index++] = ss_index;
 	}
-
+	int sp_get(int i){ return ss_sp_stack[ss_sp_index - 1 - i]; }
 	int sp_top() { return ss_sp_stack[ss_sp_index - 1]; }
 
 	void pop_sp() { ss_sp_index--; }
 	void ss_wrong_re() {
 		for (int i = sp_top(); i < ss_len(); i++) {
-			if (ss_stack[i] != NULL)
+			if (ss_stack[i] != NULL) {
+				std::cout << "delete" << (int)ss_stack[i]->type << std::endl ;
 				delete ss_stack[i];
+			}
+				
 		}
 		int sp = ss_sp_stack[--ss_sp_index];
 		ss_index = sp;
