@@ -10,9 +10,8 @@ ScopeExpect::ScopeExpect() {
 ScopeExpect::~ScopeExpect() {
 }
 
-void ScopeExpect::meetTypeSpec(ASTNode *node) {
+void ScopeExpect::meetTypeSpec() {
 	hasTypeSpec = true;
-	typeSpecNode = node;
 }
 
 void ScopeExpect::canelTypeSpec() {
@@ -24,12 +23,10 @@ void ScopeExpect::meetIdentifier(char *s) {
 		idName = s;
 }
 
-void ScopeExpect::meetBracketDeclarator(ASTNode *node) {
+void ScopeExpect::meetBracketDeclarator() {
 	if (hasTypeSpec)
 		isExpecting = true;
-	//hasTypeSpec = false;
 
-	bracketDeclarator = node;
 }
 
 void ScopeExpect::canelExpect() {
@@ -43,7 +40,7 @@ void ScopeExpect::meetCurlyBrace() {
 	if (isFuncDef) {
 		hasTypeSpec = false;
 		isFuncDef = false;
-		irc->funcExpect(typeSpecNode,id,paramList);
+		irc->funcExpect();
 	}
 	
 
@@ -53,9 +50,6 @@ void ScopeExpect::setIRC(IRCreator *i) {
 	irc = i;
 }
 
-void ScopeExpect::meetFuncDef(ASTNode *type, ASTNode *identifier, ASTNode *param_list) {
-	typeSpecNode = type;
-	paramList = param_list;
-	id = identifier;
+void ScopeExpect::meetFuncDef() {
 	isFuncDef = true;
 }

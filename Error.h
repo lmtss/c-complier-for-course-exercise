@@ -3,25 +3,27 @@
 #include <iostream>
 #include <string>
 enum ErrorType {
-	undeclared
+	undeclared, redeclared
 };
 
 struct ErrorNode {
 	FuncNode *func;
 	int line;
+	ErrorType type;
 	ErrorNode *next;
 
-	ErrorNode(FuncNode *f, int l) {
+	ErrorNode(FuncNode *f, int l, ErrorType t) {
 		func = f;
 		line = l;
 		next = NULL;
+		type = t;
 	}
 	void virtual print() = 0;
 };
 
 struct UndeclaredError : ErrorNode {
 	string varName;
-	UndeclaredError(FuncNode *f, int l, string s) : ErrorNode(f, l) {
+	UndeclaredError(FuncNode *f, int l, string s) : ErrorNode(f, l, ErrorType::undeclared) {
 		varName = s;
 	}
 	void print() {
@@ -32,7 +34,7 @@ struct UndeclaredError : ErrorNode {
 
 struct RedeclaredError : ErrorNode {
 	string varName;
-	RedeclaredError(FuncNode *f, int l, string s) : ErrorNode(f, l) {
+	RedeclaredError(FuncNode *f, int l, string s) : ErrorNode(f, l, ErrorType::redeclared) {
 		varName = s;
 	}
 	void print() {
@@ -48,6 +50,15 @@ public:
 	}
 	~ErrorManager() {
 
+	}
+
+	void addEN(FuncNode *f, int l, string s, ErrorType t) {
+		if (t == ErrorType::undeclared) {
+			addEN(new UndeclaredError(f, l, s));
+		}
+		else if (t == ErrorType::redeclared) {
+			addEN(new RedeclaredError(f, l, s));
+		}
 	}
 
 	void addEN(ErrorNode *e) {

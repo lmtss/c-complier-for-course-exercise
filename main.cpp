@@ -12,7 +12,7 @@ Lex *lex;
 ScopeExpect *scopePredictor;
 STManager* stManager;
 IRCreator *irCreator;
-ASTNode *lexVal;
+SSNode *lexVal;
 int yylineno;
 
 int main() {
@@ -35,8 +35,6 @@ int main() {
 	parser->set(scopePredictor, irCreator);
 
 	parser->parse();
-
-	
 
 	system("pause");
 	return 0;

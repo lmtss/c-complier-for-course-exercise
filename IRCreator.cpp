@@ -1,10 +1,10 @@
 #include "IRCreator.h"
-#include "AST.h"
 
-IRCreator::IRCreator() {
+
+IRCreator::IRCreator() : ss_stack(200, NULL), ss_sp_stack(200, NULL) {
 	head = NULL;
 	cur = NULL;
-
+	temp_top_index = 0;
 	em = new ErrorManager();
 }
 
@@ -17,34 +17,40 @@ void IRCreator::setSTM(STManager *s) {
 
 
 
-void IRCreator::expState(ASTNode *expStateNode) {
-	handleExpression(expStateNode->children[0]);
+void IRCreator::expState() {
+	//handleExpression(expStateNode->children[0]);
 }
 
-void IRCreator::funcExpect(ASTNode *typeSpecNode, ASTNode *identifier, ASTNode *paramList) {
+void IRCreator::funcExpect() {
+
+	int type_spec_index = sp_top();
+	SSNode *type_spec = ss_get(type_spec_index), *id = ss_get(type_spec_index + 1);
 
 	FuncNode *func = new FuncNode;
 
-	func->retType = stm->getBasicType(typeSpecNode->children[0]->type - 120);
-	func->name = identifier->content;
+	func->retType = stm->getBasicType((int)type_spec->type - 50);
+	func->name = id->string_val;
 	stm->addFunc(func);
 
-	FuncIR *ir = new FuncIR;
-	ir->next = NULL;
-	ir->func = func;
+	IRNode *ir = new IRNode(IRType::func, func);
 	
 	addIRNode(ir);
 }
-
+void IRCreator::handle_func_def() {
+	//std::cout << "adasdas " << ss_len() - sp_top();
+	for (int i = sp_top(); i < ss_len() + 1; i++)
+		ss_pop();
+	
+}
 void IRCreator::meetRCB() {
 	BlockType type = stm->getCurBlockType();
 
 	if (type == BlockType::func_block) {
-		RetIR *ir = new RetIR;
+		/*RetIR *ir = new RetIR;
 		ir->isTemp = false;
 		ir->varIndex = -1;
 
-		addIRNode(ir);
+		addIRNode(ir);*/
 	}
 
 	stm->exitScope();
@@ -60,6 +66,7 @@ void IRCreator::print() {
 
 // private
 void IRCreator::addIRNode(IRNode *node) {
+	std::cout << "IR: ";
 	node->print();
 	if (head == NULL) {
 		head = node;
@@ -67,68 +74,32 @@ void IRCreator::addIRNode(IRNode *node) {
 	}
 	else {
 		cur->next = node;
+		node->front = cur;
 		cur = node;
 	}
 }
 
-void IRCreator::handleExpression(ASTNode *exp) {
-	/*if (exp->childNum == 1) {
-		handleAssign(exp->children[0]);
+bool IRCreator::handle_return_state() {
+
+	SSNode *ret = ss_get(sp_top());
+	IRNode *ir = NULL;
+	if (ret->type == SSType::identifier) {
+		VarNode *var = NULL;
+		_handle_var_undecl(var, ret);
+
+		ir = new IRNode(IRType::ret, IRAType::var, var);
 	}
-	else {
-		handleExpression(exp->children[0]);
-		handleAssign(exp->children[1]);
-	}*/
-	for (int i = 0; i < exp->childNum; i++) {
-		handleAssign(exp->children[i]);
+	else if (ret->type == SSType::temp_var) {
+		ir = new IRNode(IRType::ret, IRAType::temp, ret->int_val);
 	}
-}
-
-TypeNode* IRCreator::handleAssign(ASTNode *assign) {
-	if (assign->childNum == 1) {
-		return stm->getBasicType(assign->children[0]->children[0]->children[0]->type - 100);
+	else if (ret->type == SSType::int_const) {
+		ir = new IRNode(IRType::ret, IRAType::int_imm, ret->int_val);
 	}
-		
-	else {
-		// check id
-		VarNode* var = stm->find(assign->children[0]->content);
-		if (var == NULL) {
-			// error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			// id not decl
-			UndeclaredError *e = new UndeclaredError(stm->getCurFunc(), assign->codeLine, assign->children[0]->content);
-			em->addEN(e);
-			return NULL;
-		}
-		TypeNode* type = handleAssign(assign->children[2]);
-		if (type == NULL) {
-			return NULL;
-		}
-		// type conversion
-
-		// create
-		if (assign->children[2]->childNum == 1) {
-			// var := #10
-			AssignImmIR *ir = new AssignImmIR;
-			ir->varIndex = var->globalIndex;
-			ir->imm = assign->children[2]->children[0]->content;
-			ir->isTemp = false;
-
-			addIRNode(ir);
-		}
-		else {
-			// var := var
-			AssignIR *ir = new AssignIR;
-			ir->varIndex_1 = var->globalIndex;
-
-			VarNode *var2 = stm->find(assign->children[2]->children[0]->content);
-			if (var2 == NULL) {
-
-			}
-			ir->varIndex_2 = var2->globalIndex;
-			ir->isTemp = false;
-			//std::cout << assign->children[0]->content << "       " << assign->children[2]->children[0]->content << std::endl;
-			addIRNode(ir);
-		}
-		return var->varType;
+	else if (ret->type == SSType::float_const) {
+		ir = new IRNode(IRType::ret, IRAType::float_imm, ret->float_val);
 	}
+
+	addIRNode(ir);
+
+	return true;
 }

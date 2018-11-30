@@ -1,10 +1,9 @@
 #include "parse.h"
-#include "AST.h"
 #include "ScopeExpect.h"
 #include <iostream>
 
-#define HE(s) if(s == false) { std::cout << "FUCK" << std::endl; return false;}
-#define expect(t) if(get_token() != t) { std::cout << "FUCK " << (int)t << std::endl; return false;}
+#define HE(s) if(s == false) { std::cout << "FUCK" << std::endl; irc->ss_wrong_re(); return false;}
+#define expect(t) if(get_token() != t) { std::cout << "expect token " << (int)t << " get "  << std::endl; return false;}
 
 void Parser::parse_translation_unit() {
 	bool meetLCB = false, meetAssign = false;
@@ -34,75 +33,89 @@ void Parser::parse_translation_unit() {
 }
 
 bool Parser::parse_func_def() {
+
+	irc->new_sp();
+
 	HE(parse_type_spec());
-	$1 = $$;
-	
-	Token ret;
 	expect(Token::identifier);
-	$2 = lex_val;
+
+	irc->ss_push(val());
 	
 	expect(Token::LB);
 	
-	ret = expect_token();
+	Token ret = expect_token();
 	expect_clear();
 	if (ret == Token::RB) {
 		get_token();
-		sp->meetFuncDef($1, $2, NULL);
 	}
 	else {
 		HE(parse_param_list());
-		$3 = $$;
 		expect(Token::RB);
-		sp->meetFuncDef($1, $2, $3);
 	}
+	sp->meetFuncDef();
 	HE(parse_compound_state());
+	irc->handle_func_def();
+	irc->pop_sp();
 	
 	return true;
 }
 
 bool Parser::parse_decl() {
+
+	irc->new_sp();
+
 	HE(parse_type_spec());
-	$1 = $$;
 	HE(parse_init_declarator_list());
-	$2 = $$;
 	expect(Token::semicolon);
-	$$ = new ASTNode(ASTType::AST_decl, 2, $1, $2);
-	irc->decl($$);
+	irc->handle_decl();
+	irc->pop_sp();
+
 	return true;
 }
 
 bool Parser::parse_init_declarator_list() {
+
+	irc->new_sp();
+
 	HE(parse_init_declarator()); 
-	ASTNode *node = new ASTNode(ASTType::AST_init_declarator_list, 1, $$);
 	while (expect_token() == Token::comma) {
 		get_token();
 		HE(parse_init_declarator());
-		node->addChild($$);
 	}
 	expect_clear();
-	$$ = node;
+
+	irc->pop_sp();
 
 	return true;
 }
 bool Parser::parse_init_declarator() {
+
+	irc->new_sp();
+
 	HE(parse_declarator());
-	$1 = $$;
 	if (expect_token() == Token::assign) {
 
 		get_token();
 		HE(parse_initializer());
-		$$ = new ASTNode(ASTType::AST_init_declarator, 2, $1, $$);
 	}
 	else {
 		expect_clear();
-		$$ = new ASTNode(ASTType::AST_init_declarator, 1, $1);
 	}
+
+	HE(irc->handle_init_declarator());
+
+	irc->clear_temp();
+
+	irc->pop_sp();
 
 	return true;
 }
 bool Parser::parse_declarator() {
+
+	irc->new_sp();
+
 	expect(Token::identifier);
-	$1 = lex_val;
+	irc->ss_push(val());
 	Token ret = expect_token();
 	// func
 	if (ret == Token::LB) {
@@ -120,15 +133,18 @@ bool Parser::parse_declarator() {
 	}
 	else {
 		expect_clear();
-		$$ = new ASTNode(ASTType::AST_declarator, 1, $1);
 	}
 		
+	irc->pop_sp();
+
 	return true;
 }
 bool Parser::parse_initializer() {
+	irc->new_sp();
 	
 	HE(parse_assign_exp());
-	$$ = new ASTNode(ASTType::AST_initializer, 1, $$);
+	irc->pop_sp();
+
 	return true;
 }
 
@@ -137,37 +153,41 @@ bool Parser::parse_type_spec() {
 	//std::cout << (int)ret << std::endl;
 	if (ret == Token::int_k) {
 		get_token();
-		$$ = new ASTNode(ASTType::AST_type_spec, 1, lex_val);
 		
 	}
 	else if(ret == Token::float_k){
 		get_token();
-		$$ = new ASTNode(ASTType::AST_type_spec, 1, lex_val);
 	}
 	else {
 		return false;
 	}
+	irc->ss_push(val());
 
 	return true;
 }
 
 bool Parser::parse_param_list() {
+
+	irc->new_sp();
+
 	HE(parse_param_decl());
-	ASTNode *node = new ASTNode(ASTType::AST_init_declarator_list, 1, $$);
 	while (expect_token() == Token::comma) {
 		get_token();
 		HE(parse_param_decl());
-		node->addChild($$);
 	}
 	expect_clear();
-	$$ = node;
+
+	irc->pop_sp();
 
 	return true;
 }
 
 bool Parser::parse_param_decl() {
+	irc->new_sp();
 	HE(parse_type_spec());
 	expect(Token::identifier);
+	irc->ss_push(val());
+	irc->pop_sp();
 	return true;
 }
 
@@ -179,7 +199,7 @@ bool Parser::parse_compound_state() {
 		//expect_clear();
 		
 		// block_item
-		if (expect_token() == Token::identifier) {// decl
+		if (t == Token::int_k || t == Token::float_k) {// decl
 			expect_clear();
 			parse_decl();
 		}
@@ -195,15 +215,37 @@ bool Parser::parse_compound_state() {
 }
 
 bool Parser::parse_state() {
-	if (expect_token() == Token::LCB) {
+
+	irc->new_sp();
+
+	Token t = expect_token();
+
+	if (t == Token::LCB) {
 		expect_clear();
 		HE(parse_compound_state());
+	}
+	else if (t == Token::return_k) {
+		std::cout << "asdasd";
+		get_token();
+		HE(parse_return_state());
 	}
 	else {
 		expect_clear();
 		HE(parse_exp_state());
 	}
 
+	irc->pop_sp();
+
+	return true;
+}
+
+bool Parser::parse_return_state() {
+	irc->new_sp();
+	HE(parse_additive_exp());
+	expect(Token::semicolon);
+	HE(irc->handle_return_state());
+
+	irc->pop_sp();
 	return true;
 }
 
@@ -212,108 +254,128 @@ bool Parser::parse_exp_state() {
 		get_token();
 	}
 	else {
+
+		irc->new_sp();
+
 		expect_clear();
 		HE(parse_exp());
-		irc->handleExpression($$);
+		expect(Token::semicolon);
+
+		irc->pop_sp();
 	}
 	return true;
 }
 
 bool Parser::parse_exp() {
+
+	irc->new_sp();
+
 	HE(parse_assign_exp());
-	ASTNode *node = new ASTNode(ASTType::AST_exp, 1, $$);
+	irc->clear_temp();
 	while (expect_token() == Token::comma) {
 		get_token();
 		HE(parse_assign_exp());
-		node->addChild($$);
+
+		irc->ss_pop();
+		irc->clear_temp();
 	}
 	expect_clear();
 
-	$$ = node;
+	irc->pop_sp();
 	return true;
 }
 
 bool Parser::parse_assign_exp() {
-	bool meetAssign = false, meetCS = false;
-	while (true) {
-		Token ret = expect_token();
 
-		if (ret == Token::assign && !meetCS) {// left
-			expect_clear();
-			HE(parse_assign_left());
-			ASTNode *n = $$;
-			expect(Token::assign);
-			HE(parse_assign_exp());
-			$$ = new ASTNode(ASTType::AST_assignment_exp, 3, n, NULL, $$);
-			break;
-		}
-		else if ((ret == Token::comma || ret == Token::semicolon) && !meetAssign) {// right
-			expect_clear();
-			HE(parse_additive_exp());
-			break;
-		}
+	irc->new_sp();
 
-		meetAssign = ret == Token::assign || meetAssign;
-		meetCS = ret == Token::comma || ret == Token::semicolon || meetCS;
-
-	}
-
-	/*Token t0 = expect_token(); 
-	if (t0 != Token::identifier) {
-		expect_clear();
-		HE(parse_primary_exp(false));
-		$$ = new ASTNode(ASTType::AST_assignment_exp, 1, $$);
+	/*if (expect_token() == Token::LB) {
+		HE(parse_assign_exp());
+		expect(Token::RB);
+		
 	}
 	else {
-		Token t1 = expect_token();
-		if (t1 == Token::assign) {
-			//expect_clear();
-			get_token();
-			ASTNode *n = lex_val;
-			
-			get_token();
-			HE(parse_assign_exp());
-			$$ = new ASTNode(ASTType::AST_assignment_exp, 3, n, NULL, $$);
-			//std::cout << "AE " << $1->content << " " << $$->content << std::endl;
-		}
-		else {
-			expect_clear();
-			HE(parse_primary_exp(true));
-			$$ = new ASTNode(ASTType::AST_assignment_exp, 1, $$);
-		}
+		expect_clear();
+		
 	}*/
+	Token ret;
+	//bool flag = true;
+	while (true) {
+		ret = expect_token();
+		if (ret == Token::comma || ret == Token::semicolon) {// assign_right
+			expect_clear();
+
+			HE(parse_additive_exp());
+
+			break;
+		}
+		else if (ret == Token::assign) {// assign_left
+			expect_clear();
+			HE(parse_assign_left());
+
+			expect(Token::assign);
+		}
+	}
 	
+
+	HE(irc->handle_assign_exp());
+
+	irc->pop_sp();
+
 	return true;
 }
 
 bool Parser::parse_additive_exp() {
+
+	irc->new_sp();
+
+	if (expect_token() == Token::substract) {
+		get_token();
+		irc->ss_push(val());
+	}
+	else
+		expect_clear();
+
 	HE(parse_multiplicative_exp());
-	ASTNode *node = new ASTNode(ASTType::AST_init_declarator_list, 1, $$);
+
 	Token t;
 	while ((t = expect_token()) == Token::add || t == Token::substract) {
 		get_token();
-		//ASTNode *t = lex_val;
-		node->addChild(lex_val);
+
+		irc->ss_push(val());
+
 		HE(parse_multiplicative_exp());
-		node->addChild($$);
 	}
+
 	expect_clear();
-	$$ = node;
+
+	HE(irc->handle_additive_exp());
+	irc->pop_sp();
+
 	return true;
 }
 bool Parser::parse_multiplicative_exp() {
+
+	irc->new_sp();
+
 	HE(parse_postfix_exp());
-	ASTNode *node = new ASTNode(ASTType::AST_init_declarator_list, 1, $$);
+
 	Token t;
 	while ((t = expect_token()) == Token::multiply || t == Token::divide) {
 		get_token();
-		//ASTNode *t = lex_val;
-		node->addChild(lex_val);
+
+		irc->ss_push(val());
+
 		HE(parse_postfix_exp());
-		node->addChild($$);
+
 	}
+
+	HE(irc->handle_multiplicative_exp());
+
 	expect_clear();
-	$$ = node;
+
+	irc->pop_sp();
+
 	return true;
 }
 bool Parser::parse_postfix_exp() {
@@ -322,17 +384,14 @@ bool Parser::parse_postfix_exp() {
 		Token t1 = expect_token();
 		if (t1 == Token::LSB) {
 			get_token();
-			ASTNode *id = lex_val;//id
 			get_token();//[
 			//
 			HE(parse_const_exp());
 			expect(Token::RSB);
 
-			$$ = new ASTNode(ASTType::AST_postfix_exp, 2, id, $$);
 		}
 		else if (t1 == Token::LB) {
 			get_token();
-			$1 = lex_val;//id
 			get_token();//(
 			//
 			if (expect_token() != Token::RB) {
@@ -345,67 +404,77 @@ bool Parser::parse_postfix_exp() {
 		}
 		else {
 			HE(parse_primary_exp(true));
-			$$ = new ASTNode(ASTType::AST_postfix_exp, 1, $$);
 		}
 	}
 	else {
+		std::cout << " P2" << std::endl;
+		expect_clear();
 		HE(parse_primary_exp(false));
-		$$ = new ASTNode(ASTType::AST_postfix_exp, 1, $$);
 	}
 	return true;
 }
 bool Parser::parse_assign_left() {
 	Token t0 = expect_token();
-	if (t0 == Token::identifier) {
-		Token t1 = expect_token();
-		if (t1 == Token::LSB) {
-			get_token();
-			ASTNode *id = lex_val;//id
-			get_token();//[
-						//
-			HE(parse_const_exp());
-			expect(Token::RSB);
+	expect(Token::identifier);
+	
+	//ASTNode *id = lex_val;
+	if (expect_token() == Token::LSB) {
+		get_token();
+		//irc->ss_push(val());
+		//id
+		get_token();//[
+					//
+		HE(parse_const_exp());
+		expect(Token::RSB);
 
-			$$ = new ASTNode(ASTType::AST_assign_left, 2, id, $$);
-
-		}
-		else {
-			HE(parse_primary_exp(true));
-			$$ = new ASTNode(ASTType::AST_assign_left, 1, $$);
-		}
 	}
 	else {
-		HE(parse_primary_exp(false));
-		$$ = new ASTNode(ASTType::AST_assign_left, 1, $$);
+
+		SSNode *id = val();
+		irc->ss_push(id);
+
+		expect_clear();
 	}
+
 	return true;
 }
 
 bool Parser::parse_primary_exp(bool isID) {
+	irc->new_sp();
 	if (isID) {
 		get_token();
-		//std::cout << "PE " << lex_val->content << std::endl;
-		$$ = new ASTNode(ASTType::AST_primary_exp, 1, lex_val);
+		irc->ss_push(val());
 	}
 	else {
-		HE(parse_const());
-		$$ = new ASTNode(ASTType::AST_primary_exp, 1, $$);
+		if (expect_token() == Token::LB) {
+			get_token();
+			std::cout << "AAAAAAAAAAAA" << std::endl;
+			HE(parse_assign_exp());
+			expect(Token::RB);
+		}
+		else {
+			expect_clear();
+			HE(parse_const());
+		}
+		
 	}
+	irc->pop_sp();
 	return true;
 }
 
 bool Parser::parse_const() {
 	Token t = get_token();
 	if (t == Token::int_const) {
-		//std::cout << "int_const";
+
+		irc->ss_push(val());
+
 	}
 	else if (t == Token::float_const) {
-
+		irc->ss_push(val());
 	}
 	else {
 		return false;
 	}
-	$$ = new ASTNode(ASTType::AST_const, 1, lex_val);
 	return true;
 }
 

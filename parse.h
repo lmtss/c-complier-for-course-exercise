@@ -1,20 +1,20 @@
 #pragma once
 #include "token.h"
 #include <queue>
-#include "AST.h"
+#include "SS.h"
 #include "ScopeExpect.h"
 #include "IRCreator.h"
 
-extern ASTNode *lexVal;
+extern SSNode *lexVal;
 
 struct TokenPool {
 	int head, end, expect;
 	Token tokens[100];
-	ASTNode *astNodes[100];
+	SSNode *astNodes[100];
 	TokenPool() {
 		head = end = expect = 0;
 	}
-	void push(Token t, ASTNode *node) {
+	void push(Token t, SSNode *node) {
 		tokens[end] = t;
 		astNodes[end] = node;
 		end = (end + 1) % 99;
@@ -39,7 +39,7 @@ struct TokenPool {
 	bool expect_end() {
 		return expect == end;
 	}
-	ASTNode *val() {
+	SSNode *val() {
 		return astNodes[head];
 	}
 };
@@ -62,6 +62,8 @@ private:
 	// 
 	Token expect_token();
 	void expect_clear() {_token_pool.clear();}
+
+	SSNode *val() { return lex_val; }
 	//
 	//void expect(Token t);
 
@@ -81,6 +83,7 @@ private:
 
 	bool parse_assign_exp();
 	bool parse_exp_state();
+	bool parse_return_state();
 
 	bool parse_exp();
 
@@ -94,8 +97,7 @@ private:
 
 	TokenPool _token_pool;
 	
-	ASTNode *$$, *$1, *$2, *$3, *$4, *$5;
-	ASTNode *lex_val;
+	SSNode *lex_val;
 
 	ScopeExpect *sp;
 	IRCreator *irc;

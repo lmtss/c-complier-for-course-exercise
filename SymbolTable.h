@@ -86,7 +86,7 @@ private:
 	map<string, FuncNode*> funcTable;
 
 	TypeNode bTypes[4] = {
-		{"int", 0},{ "int", 0 },{ "int", 0 },{ "int", 0 }
+		{"int", 0},{ "float", 0 },{ "int", 0 },{ "int", 0 }
 	};
 
 };

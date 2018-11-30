@@ -33,6 +33,7 @@ Token Parser::get_token() {
 	return ret;
 }
 
+
 Token Parser::expect_token() {
 	Token ret;
 	if (_token_pool.expect_end()) {

@@ -6,13 +6,13 @@ public:
 	ScopeExpect();
 	~ScopeExpect();
 	// func def
-	void meetTypeSpec(ASTNode *node);
+	void meetTypeSpec();
 	void canelTypeSpec();
 	void meetIdentifier(char *s);
-	void meetBracketDeclarator(ASTNode *node);
+	void meetBracketDeclarator();
 	void canelExpect();
 
-	void meetFuncDef(ASTNode *type, ASTNode *identifier, ASTNode *param_list);
+	void meetFuncDef();
 	// {
 	void meetCurlyBrace();
 
@@ -21,7 +21,6 @@ private:
 	// func def
 	bool hasTypeSpec;
 	std::string idName;
-	ASTNode *typeSpecNode, *bracketDeclarator, *paramList, *id;
 	bool isFuncDef;
 	
 	bool isExpecting;

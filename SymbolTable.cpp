@@ -108,7 +108,7 @@ VarNode *STManager::find(string& str) const {
 		else 
 			table = table->father;
 		
-	} while (table != wholeTable);
+	} while (table != NULL);
 
 	return NULL;
 }

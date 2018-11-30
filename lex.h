@@ -1,6 +1,7 @@
 #pragma once
 #include "token.h"
 #include "ScopeExpect.h"
+#include "SS.h"
 #include<fstream>
 #include<string>
 
@@ -8,7 +9,8 @@ extern char *yytext;
 extern ScopeExpect *scopePredictor;
 extern STManager* stManager;
 extern IRCreator *irCreator;
-extern ASTNode *lexVal;
+//extern ASTNode *lexVal;
+extern SSNode *lexVal;
 
 extern int yylineno;
 

@@ -138,16 +138,16 @@ void Lex::initFunc() {
 	//func[Token::int_const] = [] {printf("INTC"); };
 	func[Token::LCB] = [] {};
 	func[Token::RCB] = [] {  };
-	func[Token::add] = [] {lexVal = new ASTNode(ASTType::AST_add, 0, yylineno); };
-	func[Token::substract] = [] {lexVal = new ASTNode(ASTType::AST_sub, 0, yylineno); };
-	func[Token::multiply] = [] {lexVal = new ASTNode(ASTType::AST_mult, 0, yylineno); };
-	func[Token::divide] = [] {lexVal = new ASTNode(ASTType::AST_div, 0, yylineno); };
+	func[Token::add] = [] {lexVal = new SSNode(SSType::add, yylineno, yytext); };
+	func[Token::substract] = [] {lexVal = new SSNode(SSType::sub, yylineno, yytext); };
+	func[Token::multiply] = [] {lexVal = new SSNode(SSType::mult, yylineno, yytext); };
+	func[Token::divide] = [] {lexVal = new SSNode(SSType::div, yylineno, yytext); };
 	//func[Token::su] = [] {};
-	func[Token::identifier] = [] {lexVal = new ASTNode(ASTType::AST_identifier, 0, yylineno); };
-	func[Token::int_k] = [] {lexVal = new ASTNode(ASTType::AST_int_k, 0, yylineno); };
-	func[Token::float_k] = [] {lexVal = new ASTNode(ASTType::AST_float_k, 0, yylineno); };
-	func[Token::int_const] = [] {lexVal = new ASTNode(ASTType::AST_int_const, 0, yylineno); };
-	func[Token::float_const] = [] {lexVal = new ASTNode(ASTType::AST_float_const, 0, yylineno); };
+	func[Token::identifier] = [] {lexVal = new SSNode(SSType::identifier, yylineno, yytext); };
+	func[Token::int_k] = [] {lexVal = new SSNode(SSType::int_k, yylineno, yytext); };
+	func[Token::float_k] = [] {lexVal = new SSNode(SSType::float_k, yylineno, yytext); };
+	func[Token::int_const] = [] {lexVal = new SSNode(SSType::int_const, yylineno, yytext); };
+	func[Token::float_const] = [] {lexVal = new SSNode(SSType::float_const, yylineno, yytext); };
 
 }
 
