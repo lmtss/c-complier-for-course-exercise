@@ -153,8 +153,11 @@ void Lex::initFunc() {
 	func[Token::divide] = [] {lexVal = new SSNode(SSType::div, yylineno, yytext); };
 	//func[Token::su] = [] {};
 	func[Token::identifier] = [] {lexVal = new SSNode(SSType::identifier, yylineno, yytext); };
+
 	func[Token::int_k] = [] {lexVal = new SSNode(SSType::int_k, yylineno, yytext); };
 	func[Token::float_k] = [] {lexVal = new SSNode(SSType::float_k, yylineno, yytext); };
+	func[Token::void_k] = [] {lexVal = new SSNode(SSType::void_k, yylineno, yytext); };
+
 	func[Token::else_k] = [] { /*lexVal = new SSNode(SSType::else_k, yylineno, yytext);*/ };
 	func[Token::int_const] = [] {lexVal = new SSNode(SSType::int_const, yylineno, yytext); };
 	func[Token::float_const] = [] {lexVal = new SSNode(SSType::float_const, yylineno, yytext); };

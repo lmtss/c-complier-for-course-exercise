@@ -72,8 +72,10 @@ private:
 	bool parse_func_def();
 	bool parse_decl();
 	bool parse_type_spec();
-	bool parse_param_list();
+	bool parse_decl_param_list();
 	bool parse_param_decl();
+	bool parse_def_param_list();
+	bool parse_def_param();
 	bool parse_compound_state();
 	bool parse_state();
 	bool parse_init_declarator_list();
@@ -85,6 +87,7 @@ private:
 	bool parse_exp_state();
 	bool parse_return_state();
 	bool parse_if_state();
+	bool parse_while_state();
 
 	bool parse_exp();
 

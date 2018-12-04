@@ -26,21 +26,78 @@ void IRCreator::funcExpect() {
 	int type_spec_index = sp_get(1);
 	SSNode *type_spec = ss_get(type_spec_index), *id = ss_get(type_spec_index + 1);
 
-	FuncNode *func = new FuncNode;
+	FuncNode *func = stm->findFunc(id->string_val);
+	if (func == NULL) {
+		func = new FuncNode;
 
-	func->retType = stm->getBasicType((int)type_spec->type - 50);
-	func->name = id->string_val;
-	stm->addFunc(func);
+		func->retType = stm->getBasicType((int)type_spec->type - 50);
+		func->name = id->string_val;
 
-	IRNode *ir = new IRNode(IRType::func, func);
+		func->param_num = 0;
+		func->table = NULL;
+		for (int i = type_spec_index + 2; i < sp_top(); i+=2) {
+			VarNode *param = new VarNode;
+			SSNode *type_node = ss_get(i);
+			param->declPosLine = type_node->code_line;
+			param->varType = stm->getBasicType((int)type_node->type - 50);
+
+			SSNode *id_node = ss_get(i + 1);
+			param->name = id_node->string_val;
+			func->paraList.push_back(param);
+			func->param_num++;
+		}
+		stm->insertFunc(func);
+	}
+	else {
+		// ret type
+		if (func->retType != stm->getBasicType((int)type_spec->type - 50)) {
+
+		}
+		// param num
+		int def_param_num = (sp_top() - type_spec_index - 2) / 2;
+		if (def_param_num != func->param_num) {
+
+		}
+		// param type
+		for (int i = 0; i < def_param_num; i++) {
+			TypeNode *decl_param_type = func->paraList[i]->varType;
+			SSNode *ts = ss_get(type_spec_index + 2 + 2 * i);
+			TypeNode *def_param_type = stm->getBasicType((int)ts->type - 50);
+
+			if (def_param_type != decl_param_type) {
+
+			}
+
+			SSNode *is = ss_get(type_spec_index + 2 + 2 * i + 1);
+			func->paraList[i]->name = is->string_val;
+			func->paraList[i]->declPosLine = is->code_line;
+		}
+	}
+
+	
+	func->table = stm->addFunc(func);
+	for (int i = 0; i < func->param_num; i++) {
+		func->table->insert(func->paraList[i]->name, func->paraList[i]);
+		func->paraList[i]->level = stm->getCurLevel();
+	}
+
+	IRNode *ir = new IRNode(IRType::func, NULL);
+	ir->setArg(0, func);
 	
 	addIRNode(ir);
+
+	if (func->retType != stm->getBasicType(2)) {
+		has_return = false;
+	}
 }
-void IRCreator::handle_func_def() {
+bool IRCreator::handle_func_def() {
 	//std::cout << "adasdas " << ss_len() - sp_top();
 	for (int i = sp_top(); i < ss_len() + 1; i++)
 		ss_pop();
-	
+	if (!has_return) {
+		return false;
+	}
+	return true;
 }
 void IRCreator::meetRCB() {
 	BlockType type = stm->getCurBlockType();
@@ -105,13 +162,21 @@ void IRCreator::addIRNode(IRNode *node) {
 		_expect_end_label = NULL;
 		is_parse_if_end = false;
 	}
+
+	if (_expect_while_to_logic_label != NULL) {
+		_expect_while_to_logic_label->target = node;
+		label_finish(_expect_while_to_logic_label);
+		_expect_while_to_logic_label = NULL;
+	}
 }
 
 bool IRCreator::handle_return_state() {
 
 	SSNode *ret = ss_get(sp_top());
 	IRNode *ir = NULL;
-	if (ret->type == SSType::identifier) {
+	ir = new IRNode(IRType::ret, NULL);
+	set_arg(ir, 0, ret);
+	/*if (ret->type == SSType::identifier) {
 		VarNode *var = NULL;
 		_handle_var_undecl(var, ret);
 
@@ -125,9 +190,10 @@ bool IRCreator::handle_return_state() {
 	}
 	else if (ret->type == SSType::float_const) {
 		ir = new IRNode(IRType::ret, IRAType::float_imm, ret->float_val);
-	}
+	}*/
 
 	addIRNode(ir);
+	has_return = true;
 
 	return true;
 }
@@ -277,23 +343,80 @@ bool IRCreator::handle_rel_exp(Token op) {
 
 bool IRCreator::handle_func_call() {
 	int start_index = sp_top(), fin_index = ss_len();
-	int temp = temp_top_index++;
+	
 	
 
 	FuncNode *func = stm->findFunc(ss_get(start_index)->string_val);
+
 	if (func == NULL) {
 		return false;
 	}
 	// 判断参数数目
 	if (fin_index - start_index - 1 != func->param_num) {
+		ParamNumError *e = new ParamNumError(ss_get(start_index)->code_line, ss_get(start_index)->string_val, fin_index - start_index - 1, func->param_num);
+		em->addEN(e);
 		return false;
 	}
 
 	IRNode *ir = new IRNode(IRType::func_call, NULL);
+	ir->setArg(0, func);
+	
+	
+	
+	addIRNode(ir);
 	IRNode *param_in = NULL;
 	// 传参
 	for (int i = start_index + 1; i < fin_index; i++) {
 		param_in = new IRNode(IRType::func_param_in, NULL);
+		set_arg(param_in, 0, ss_get(i));
+		addIRNode(param_in);
 	}
+	for (int i = start_index; i < fin_index; i++) {
+		ss_pop();
+	}
+	// void ?
+	if (func->retType != stm->getBasicType(2)) {
+		int temp = temp_top_index++;
+		ir->setArg(1, TempType(temp));
+		ss_push(new SSNode(SSType::temp_var, 0, temp));
+	}
+
+	return true;
+}
+
+bool IRCreator::handle_while_state() {
+	int start_index = sp_top();
+	IRNode *fin_jump = new IRNode(IRType::jump, NULL);
+	LabelNode *to_logic_label = ss_get(start_index)->label;
+	fin_jump->setArg(0, to_logic_label);
+	addIRNode(fin_jump);
+
+	LabelNode *break_label = ss_get(start_index + 2)->label;
+	_expect_false_label = break_label;
+
+	ss_pop();
+	ss_pop();
+	ss_pop();
+
+	is_parse_else = true;
+
+	return true;
+}
+
+bool IRCreator::handle_while_state_1() {
+	LabelNode *to_logic_label = new LabelNode(NULL, NULL);
+	_expect_while_to_logic_label = to_logic_label;
+	ss_push(new SSNode(to_logic_label));
+
+
+
+	return true;
+}
+
+bool IRCreator::handle_while_state_2() {
+	LabelNode *label = ss_get(sp_top() + 1)->label;
+	_expect_true_label = label;
+
+	is_parse_if = true;
 	return true;
 }

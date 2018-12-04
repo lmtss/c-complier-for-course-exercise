@@ -71,7 +71,7 @@ void STManager::addTable(BlockType t) {
 	curLevel++;
 }
 
-void STManager::addFunc(FuncNode *func) {
+SymbolTable* STManager::addFunc(FuncNode *func) {
 
 	if (curTable != wholeTable) {
 		// error
@@ -84,6 +84,12 @@ void STManager::addFunc(FuncNode *func) {
 	curFunc = func;
 
 	curLevel++;
+
+	return table;
+}
+
+void STManager::insertFunc(FuncNode *f) {
+	funcTable[f->name] = f;
 }
 
 void STManager::exitScope() {

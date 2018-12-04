@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 enum ErrorType {
-	undeclared, redeclared
+	undeclared, redeclared, param_num, no_ret
 };
 
 struct ErrorNode {
@@ -40,6 +40,28 @@ struct RedeclaredError : ErrorNode {
 	void print() {
 		std::cout << "In function \'" << func->name << "\':" << std::endl;
 		std::cout << "line " << line << " error: \'" << varName << "\' redeclared" << std::endl;
+	}
+};
+
+struct ParamNumError : ErrorNode {
+	string funcName;
+	int wrong_num, correct_num;
+	ParamNumError(int l, string s, int w, int c) : ErrorNode(NULL, l, ErrorType::param_num) {
+		funcName = s;
+		wrong_num = w;
+		correct_num = c;
+	}
+	void print() {
+		std::cout << "argument num " << "pass " << wrong_num << " arg, should pass " << correct_num << " arg" << std::endl;
+	}
+};
+
+struct NoRetError : ErrorNode {
+	NoRetError(int l) : ErrorNode(NULL, l, ErrorType::no_ret) {
+
+	}
+	void print() {
+		std::cout << "no return" << std::endl;
 	}
 };
 
@@ -85,4 +107,3 @@ public:
 private:
 	ErrorNode *head, *cur;
 };
-

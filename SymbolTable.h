@@ -39,7 +39,7 @@ struct FuncNode : IDNode {
 	bool isDefinied = false;
 	TypeNode *retType;
 	int param_num;
-	vector<VarNode> paraList;
+	vector<VarNode*> paraList;
 	SymbolTable *table;
 };
 
@@ -62,13 +62,15 @@ public:
 	STManager();
 	~STManager();
 	void addTable(BlockType t);
-	void addFunc(FuncNode *func);
+	SymbolTable* addFunc(FuncNode *func);
 	void exitScope();
 
 	VarNode* find(string& str) const;
 	VarNode* findCurTable(string& str) const;
 	FuncNode* findFunc(string& str) const;
 	VarNode* insert(string& name, int level, TypeNode *type, int line);
+	//FuncNode* insertFunc(string& name, )
+	void insertFunc(FuncNode *f);
 
 	TypeNode *getBasicType(int i);
 
@@ -87,7 +89,7 @@ private:
 	map<string, FuncNode*> funcTable;
 
 	TypeNode bTypes[4] = {
-		{"int", 0},{ "float", 0 },{ "int", 0 },{ "int", 0 }
+		{"int", 0},{ "float", 0 },{ "void", 0 },{ "int", 0 }
 	};
 
 };

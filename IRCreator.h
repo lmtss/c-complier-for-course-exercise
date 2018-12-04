@@ -64,6 +64,9 @@ struct IRArg {
 		case IRAType::jump_label:
 			std::cout << 'L' << label->index;
 			break;
+		case IRAType::func:
+			std::cout << ((FuncNode *)id)->name << " ret " << ((FuncNode *)id)->retType->name;
+			break;
 		default:
 			break;
 		}
@@ -288,6 +291,16 @@ struct IRNode {
 			std::cout << "goto ";
 			args[2].print();
 			break;
+		case IRType::func_call:
+			std::cout << "call ";
+			args[0].print();
+			std::cout << "to ";
+			args[1].print();
+			break;
+		case IRType::func_param_in:
+			std::cout << "param ";
+			args[0].print();
+			break;
 		default:
 			break;
 		}
@@ -453,7 +466,7 @@ public:
 	void handle_idl();
 	bool handle_init_declarator();
 
-	void handle_func_def();
+	bool handle_func_def();
 	bool handle_func_call();
 	//
 	bool handle_return_state();
@@ -471,11 +484,16 @@ public:
 	bool handle_if_state_3();
 	bool handle_if_state_4();
 
+	bool handle_while_state();
+	bool handle_while_state_1();
+	bool handle_while_state_2();
+
 	bool is_parse_if = false;
 	bool is_parse_else = false;
 	bool is_parse_if_end = false;
 
 	LabelNode *_expect_true_label = NULL, *_expect_false_label = NULL, *_expect_end_label = NULL;
+	LabelNode *_expect_while_to_logic_label = NULL;
 
 	bool set_arg(IRNode *ir, int index, SSNode *n) {
 		if (n->type == SSType::identifier) {
@@ -544,6 +562,8 @@ private:
 
 	std::map<IRNode*, LabelNode*> label_map;
 	int label_index = 0;
+
+	bool has_return = true;
 
 	void addIRNode(IRNode *node);
 	void delete_ir_node(IRNode *node) {
