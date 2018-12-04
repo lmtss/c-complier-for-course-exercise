@@ -27,10 +27,6 @@ bool IRCreator::handle_init_declarator() {
 		SSNode *initializer = ss_get(declarator_index + 1);
 		//std::cout << "HANDLE INIT DECLARATOR " << (int)initializer->type << std::endl;
 		if (initializer->type == SSType::identifier) {
-			/*VarNode *var = stm->find(initializer->string_val);
-			if (var == NULL) {
-				return false;
-			}*/
 			VarNode *var = NULL;
 			_handle_var_undecl(var, initializer);
 			ir = new IRNode(IRType::assign, IRAType::var, var, IRAType::var, insert_res);

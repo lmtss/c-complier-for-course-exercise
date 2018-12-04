@@ -4,9 +4,12 @@ enum class SSType {
 	int_const = 0, float_const, char_const, bool_const,
 	identifier, func_call, array_left, array_right,
 	add, sub, mult, div, mod,
-	int_k = 50, float_k,
-	temp_var
+	int_k = 50, float_k, else_k,
+	temp_var, ir, label
 };
+
+struct IRNode;
+struct LabelNode;
 
 struct SSNode {
 	SSType type;
@@ -14,6 +17,7 @@ struct SSNode {
 	std::string string_val;
 	int int_val;
 	float float_val;
+	LabelNode *label;
 
 	SSNode(SSNode *n) : string_val() {
 		type = n->type;
@@ -48,6 +52,13 @@ struct SSNode {
 		int_val = 0;
 		code_line = l;
 	}
+
+	SSNode(LabelNode *l) : string_val() {
+		type = SSType::label;
+		code_line = -1;
+		label = l;
+	}
+
 
 	static bool isConst(SSType t) {
 		return t >= SSType::int_const && t <= SSType::bool_const;

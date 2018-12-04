@@ -42,6 +42,9 @@ void ScopeExpect::meetCurlyBrace() {
 		isFuncDef = false;
 		irc->funcExpect();
 	}
+	else {
+		irc->enter_scope();
+	}
 	
 
 }
@@ -52,4 +55,12 @@ void ScopeExpect::setIRC(IRCreator *i) {
 
 void ScopeExpect::meetFuncDef() {
 	isFuncDef = true;
+}
+
+void ScopeExpect::meetIf() {
+	isIf = true;
+}
+
+void ScopeExpect::meetElse() {
+	isElse = true;
 }

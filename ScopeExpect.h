@@ -13,6 +13,8 @@ public:
 	void canelExpect();
 
 	void meetFuncDef();
+	void meetIf();
+	void meetElse();
 	// {
 	void meetCurlyBrace();
 
@@ -22,6 +24,8 @@ private:
 	bool hasTypeSpec;
 	std::string idName;
 	bool isFuncDef;
+	bool isIf = false;
+	bool isElse = false;
 	
 	bool isExpecting;
 	int numRCBE;//期望的 } 数量

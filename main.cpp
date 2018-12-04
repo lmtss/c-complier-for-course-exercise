@@ -6,6 +6,7 @@
 #include "IRCreator.h"
 #include <iostream>
 #include <cstdio>
+#include <type_traits>
 
 char *yytext;
 Lex *lex;
@@ -35,6 +36,13 @@ int main() {
 	parser->set(scopePredictor, irCreator);
 
 	parser->parse();
+
+
+	std::cout << "-----------------" << std::endl;
+	irCreator->print();
+
+	/*IRNode *ir = IRNode::Create(IRType::add, 3.3, 3.3, 3.3);
+	ir->print();*/
 
 	system("pause");
 	return 0;

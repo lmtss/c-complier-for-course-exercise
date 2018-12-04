@@ -27,22 +27,28 @@ enum class LexState {
 	return_1 = 23, return_2, return_3, return_4, return_5, return_6,
 	while_1 = 29, while_2, while_3, while_4, while_5,
 	bool_1 = 34, bool_2, bool_3, bool_4,
-	char_const_1 = 38, char_const_2,
-	equal_1 = 40,
+	else_1 = 38, else_2, else_3, else_4,
+	char_const_1 = 42, char_const_2,
+	equal_1 = 44,
 	greater_1,
 	less_1,
+	logic_or_1,
+	logic_and_1,
 
 	// fin
 	int_const = 100, float_const, char_const, 
 	int_k, float_k, char_k, bool_k, void_k,
-	return_k, for_k, while_k, if_k,
+	return_k, for_k, while_k, if_k, else_k,
 	identifier,
+	
 	//120 { } ( ) . ; , 
 	LCB = 120, RCB, LB, RB, LSB, RSB, dot, semicolon, comma,  
 	// * / + -
 	multiply = 129, divide, add, substract,
+	logic_or, logic_and,
 	// == >= <= > < =
-	double_equal = 133, greater_equal, less_equal, greater, less, assign,
+	double_equal = 135, unequal,greater_equal, less_equal, greater, less, assign,
+	
 	
 	
 	//error

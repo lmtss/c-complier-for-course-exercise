@@ -364,18 +364,12 @@ bool IRCreator::handle_multiplicative_exp() {
 						return false;
 					}
 					t2 = temp_top_index++;
-					//std::cout << arg->string_val << " " << t2 << std::endl;
 					zz_s = arg;
 					zz_t = oper_type;
 				}
 				else {
 
 					IRType t = oper_type == SSType::mult ? IRType::mult : IRType::div;
-
-					/*VarNode *var_a0 = stm->find(arg->string_val);
-					if (var_a0 == NULL) {
-						return false;
-					}*/
 					VarNode *var_a0 = NULL;
 					_handle_var_undecl(var_a0, arg)
 
@@ -478,16 +472,19 @@ bool IRCreator::handle_multiplicative_exp() {
 					addIRNode(ir);
 				}
 				else {
-					IRArg *a = new IRArg;
+					//IRArg *a = new IRArg;
+					//std::cout << "RRRRRRRRRRRRRRRRRR" << std::endl;
 					if (has_float_const) {
-						a->type = IRAType::float_imm;
-						a->float_imm = x_const;
+						/*a->type = IRAType::float_imm;
+						a->float_imm = x_const;*/
+						ir_with_const->setArg(1, x_const);
 					}
 					else {
-						a->type = IRAType::int_imm;
-						a->int_imm = (int)x_const;
+						//a->type = IRAType::int_imm;
+						//a->int_imm = (int)x_const;
+						ir_with_const->setArg(1, (int)x_const);
 					}
-					ir_with_const->setArg(1, a);
+					//ir_with_const->setArg(1, a);
 				}
 			}
 			ss_push(new SSNode(SSType::temp_var, 0, t2));

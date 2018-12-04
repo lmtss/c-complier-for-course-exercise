@@ -84,8 +84,11 @@ private:
 	bool parse_assign_exp();
 	bool parse_exp_state();
 	bool parse_return_state();
+	bool parse_if_state();
 
 	bool parse_exp();
+
+	bool parse_call_arg_list();
 
 	bool parse_assign_left();
 	bool parse_additive_exp();
@@ -94,6 +97,12 @@ private:
 	bool parse_primary_exp(bool isID);
 	bool parse_const();
 	bool parse_const_exp();
+
+	bool parse_logic_exp();
+	bool parse_logic_or_exp();
+	bool parse_logic_and_exp();
+	//bool parse_equal_exp();
+	bool parse_rel_exp();
 
 	TokenPool _token_pool;
 	

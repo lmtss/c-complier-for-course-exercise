@@ -38,6 +38,7 @@ struct VarNode : IDNode {
 struct FuncNode : IDNode {
 	bool isDefinied = false;
 	TypeNode *retType;
+	int param_num;
 	vector<VarNode> paraList;
 	SymbolTable *table;
 };
