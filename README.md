@@ -11,6 +11,9 @@ c-complier for course exercise
      * - [ ] break
      * - [ ] continue
    * - [ ] for
+     * - [x] 基本
+     * - [ ] break
+     * - [ ] continue
    * - [ ] switch
 * - [ ] 后端
 ## 支持的语法
@@ -111,7 +114,27 @@ struct IRNode {
 	IRType type;
 }
 ```
-## 符号表api
+## 前端api (大概
 ```cpp
+class FrontEndInterface {
+public:
+	IRNode *getIR(int i);
+	
+	std::vector<IRNode *> ir_list;
+private:
+	
+};
+```
+```cpp
+struct VarNode : IDNode {
+	TypeNode *varType; // 变量类型, 目前只可能是int
+	int level = -1;// 作用域层级 全局作用域为0
+};
 
+struct FuncNode : IDNode {
+	TypeNode *retType; // 返回值类型, 目前只可能是int
+	int param_num;
+	vector<VarNode*> paraList;
+	SymbolTable *table; // 此函数对应的符号表
+};
 ```
