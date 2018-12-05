@@ -6,16 +6,18 @@ c-complier for course exercise
   * - [x] 函数
   * - [ ] 控制流
     * - [x] if
-   * - [ ] while
-     * - [x] 基本
-     * - [ ] break
-     * - [ ] continue
-   * - [ ] for
-     * - [x] 基本
-     * - [ ] break
-     * - [ ] continue
-   * - [ ] switch
+    * - [ ] while
+      * - [x] 基本
+      * - [ ] break
+      * - [ ] continue
+    * - [ ] for
+      * - [x] 基本
+      * - [ ] break
+      * - [ ] continue
+    * - [ ] switch
 * - [ ] 后端
+  * - [ ] 四元式优化-DAG
+  * - [ ] 基本块分配
 ## 支持的语法
 参考c-BNF
 #### 声明&函数定义
