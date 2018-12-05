@@ -54,7 +54,7 @@ if-state = "if" ( logic-or-exp ) state
          | "if" ( logic-or-exp ) state "else" state
 while-state = "while" ( logic-or-exp ) state
 
-for-state = "for" ( {exp}? ; logic-or-exp ; {exp}? ) state
+for-state = "for" ( {assign-exp}? ; logic-or-exp ; {assign-exp}? ) state
 
 return-state = "return" assign-exp ;
 ```
