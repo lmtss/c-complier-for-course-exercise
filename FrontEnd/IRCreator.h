@@ -365,7 +365,7 @@ public:
 	void print();
 
 	void clear_temp() {
-		temp_top_index = 0;
+		//temp_top_index = 0;
 	}
 
 
