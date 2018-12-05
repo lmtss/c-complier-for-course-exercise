@@ -88,6 +88,7 @@ private:
 	bool parse_return_state();
 	bool parse_if_state();
 	bool parse_while_state();
+	bool parse_for_state();
 
 	bool parse_exp();
 

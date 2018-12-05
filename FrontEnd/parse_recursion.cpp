@@ -9,7 +9,7 @@ Token error_expect_token;
 void Parser::parse_translation_unit() {
 	bool meetLCB = false, meetAssign = false, fin = false;
 	int n = 0;
-	while (!fin) {
+	while (!fin && n < 3) {
 		n++;
 		while (true) {
 			Token ret = expect_token();
@@ -58,7 +58,7 @@ bool Parser::parse_func_def() {
 	}
 	sp->meetFuncDef();
 	HE(parse_compound_state());
-	irc->handle_func_def();
+	HE(irc->handle_func_def());
 	irc->pop_sp();
 	
 	return true;
@@ -275,6 +275,10 @@ bool Parser::parse_state() {
 		get_token();
 		HE(parse_while_state());
 	}
+	else if (t == Token::for_k) {
+		get_token();
+		HE(parse_for_state());
+	}
 	else {
 		expect_clear();
 		HE(parse_exp_state());
@@ -390,18 +394,16 @@ bool Parser::parse_assign_exp() {
 
 			break;
 		}
-		else if (ret == Token::RB) {
-			is_lb = false;
-		}
 		else if (ret == Token::comma || ret == Token::semicolon || ret == Token::RB) {// assign_right
 			expect_clear();
-
+			//std::cout << "ASSR" << std::endl;
 			HE(parse_additive_exp());
 
 			break;
 		}
 		else if (ret == Token::assign && !is_lb) {// assign_left
 			expect_clear();
+			//std::cout << "ASSL" << std::endl;
 			HE(parse_assign_left());
 
 			expect(Token::assign);
@@ -613,8 +615,6 @@ bool Parser::parse_logic_or_exp() {
 	return true;
 }
 
-
-
 bool Parser::parse_logic_and_exp() {
 	irc->new_sp();
 	//HE(irc->handle_logic_and_exp_1());
@@ -630,10 +630,6 @@ bool Parser::parse_logic_and_exp() {
 	return true;
 }
 
-/*bool Parser::parse_equal_exp() {
-	return true;
-}*/
-
 bool Parser::parse_rel_exp() {
 
 	irc->new_sp();
@@ -647,6 +643,53 @@ bool Parser::parse_rel_exp() {
 
 	HE(irc->handle_rel_exp(t));
 
+	irc->pop_sp();
+	return true;
+}
+
+bool Parser::parse_for_state() {
+	
+	irc->new_sp();
+	expect(Token::LB);
+
+	if (expect_token() == Token::semicolon) {
+		get_token();
+	}
+	else {
+		expect_clear();
+		HE(parse_exp());
+		irc->ss_pop();
+		expect(Token::semicolon);
+	}
+
+	irc->handle_while_state_1(); // to_logic_label 实际上可能指向state
+	if (expect_token() == Token::semicolon) {
+		get_token();
+	}
+	else {
+		expect_clear();
+		HE(parse_logic_or_exp());
+		expect(Token::semicolon);
+	}
+
+	irc->handle_for_state_1();
+	if (expect_token() == Token::RB) {
+		get_token();
+	}
+	else {
+		expect_clear();
+		/*std::cout << (int)expect_token() << std::endl;
+		expect_clear();*/
+		HE(parse_assign_exp());
+		irc->ss_pop();
+		expect(Token::RB);
+	}
+	irc->handle_for_state_2();
+	irc->handle_while_state_2();
+	
+	HE(parse_state());
+	irc->handle_for_state_3();
+	irc->handle_while_state();
 	irc->pop_sp();
 	return true;
 }

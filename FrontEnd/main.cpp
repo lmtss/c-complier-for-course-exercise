@@ -1,9 +1,9 @@
-#include "FrontEnd/lex.h"
-#include "FrontEnd/token.h"
-#include "FrontEnd/parse.h"
-#include "FrontEnd/ScopeExpect.h"
-#include "FrontEnd/SymbolTable.h"
-#include "FrontEnd/IRCreator.h"
+#include "lex.h"
+#include "token.h"
+#include "parse.h"
+#include "ScopeExpect.h"
+#include "SymbolTable.h"
+#include "IRCreator.h"
 #include "FrontEndInterface.h"
 #include <iostream>
 #include <cstdio>

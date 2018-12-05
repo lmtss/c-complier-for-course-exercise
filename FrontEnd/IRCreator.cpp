@@ -87,6 +87,7 @@ void IRCreator::funcExpect() {
 	addIRNode(ir);
 
 	if (func->retType != stm->getBasicType(2)) {
+		//std::cout << "expect return" << std::endl;
 		has_return = false;
 	}
 }
@@ -95,6 +96,9 @@ bool IRCreator::handle_func_def() {
 	for (int i = sp_top(); i < ss_len() + 1; i++)
 		ss_pop();
 	if (!has_return) {
+		
+		NoRetError *e = new NoRetError(stm->getCurFunc());
+		em->addEN(e);
 		return false;
 	}
 	return true;
@@ -114,6 +118,7 @@ void IRCreator::meetRCB() {
 }
 
 void IRCreator::print() {
+	std::cout << "-----------------IR------------------" << std::endl;
 	IRNode *printNode = head;
 	while (printNode != NULL) {
 
@@ -125,6 +130,8 @@ void IRCreator::print() {
 		printNode->print();
 		printNode = printNode->next;
 	}
+	std::cout << "----------------ERROR----------------" << std::endl;
+	em->print();
 }
 
 // private
@@ -132,42 +139,60 @@ void IRCreator::addIRNode(IRNode *node) {
 	std::cout << "IR: ";
 	node->print();
 	node->next = NULL;
-	if (head == NULL) {
-		head = node;
-		cur = head;
+	
+
+	if (!expect_for_exp_3) {
+		ir_num++;
+		if (head == NULL) {
+			head = node;
+			cur = head;
+		}
+		else {
+			cur->next = node;
+			node->front = cur;
+			cur = node;
+		}
+
+		if (is_parse_if) {
+			_expect_true_label->target = node;
+			label_finish(_expect_true_label);
+			is_parse_if = false;
+		}
+
+		if (is_parse_else) {
+			_expect_false_label->target = node;
+			label_finish(_expect_false_label);
+			//std::cout << "!!!!!!!!!!!!!!!!" << std::endl;
+			is_parse_else = false;
+		}
+
+		if (is_parse_if_end) {
+
+			_expect_end_label->target = node;
+			label_finish(_expect_end_label);
+			_expect_end_label = NULL;
+			is_parse_if_end = false;
+		}
+
+		if (_expect_while_to_logic_label != NULL) {
+			_expect_while_to_logic_label->target = node;
+			label_finish(_expect_while_to_logic_label);
+			_expect_while_to_logic_label = NULL;
+		}
+
 	}
 	else {
-		cur->next = node;
-		node->front = cur;
-		cur = node;
+		if (for_exp_3_head == NULL) {
+			for_exp_3_head = node;
+			for_exp_3_end = for_exp_3_head;
+		}
+		else {
+			for_exp_3_end->next = node;
+			node->front = for_exp_3_end;
+			for_exp_3_end = node;
+		}
 	}
 
-	if (is_parse_if) {
-		_expect_true_label->target = node;
-		label_finish(_expect_true_label);
-		is_parse_if = false;
-	}
-
-	if (is_parse_else) {
-		_expect_false_label->target = node;
-		label_finish(_expect_false_label);
-		//std::cout << "!!!!!!!!!!!!!!!!" << std::endl;
-		is_parse_else = false;
-	}
-
-	if (is_parse_if_end) {
-
-		_expect_end_label->target = node;
-		label_finish(_expect_end_label);
-		_expect_end_label = NULL;
-		is_parse_if_end = false;
-	}
-
-	if (_expect_while_to_logic_label != NULL) {
-		_expect_while_to_logic_label->target = node;
-		label_finish(_expect_while_to_logic_label);
-		_expect_while_to_logic_label = NULL;
-	}
 }
 
 bool IRCreator::handle_return_state() {
@@ -408,8 +433,6 @@ bool IRCreator::handle_while_state_1() {
 	_expect_while_to_logic_label = to_logic_label;
 	ss_push(new SSNode(to_logic_label));
 
-
-
 	return true;
 }
 
@@ -418,5 +441,25 @@ bool IRCreator::handle_while_state_2() {
 	_expect_true_label = label;
 
 	is_parse_if = true;
+	return true;
+}
+
+bool IRCreator::handle_for_state_1() {
+	expect_for_exp_3 = true;
+	return true;
+}
+
+bool IRCreator::handle_for_state_2() {
+	expect_for_exp_3 = false;
+	return true;
+}
+
+bool IRCreator::handle_for_state_3() {
+	IRNode *e3_head = for_exp_3_head, *e3_cur = e3_head, *e3_t;
+	for_exp_3_head = for_exp_3_end = NULL;
+	for (; e3_cur != NULL; e3_cur = e3_t) {
+		e3_t = e3_cur->next;
+		addIRNode(e3_cur);
+	}
 	return true;
 }

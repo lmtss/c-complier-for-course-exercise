@@ -72,6 +72,8 @@ struct IRArg {
 		}
 		std::cout << " ";
 	}
+	VarNode *getVar() { return (VarNode *)id; }
+	FuncNode *getFuc() { return (FuncNode *)id; }
 };
 
 struct TempType {
@@ -338,47 +340,9 @@ struct IRNode {
 		args[i].id = f;
 		args[i].type = IRAType::func;
 	}
-	/*static IRNode cur_create_ir;
-	static int cur_create_i;
-	static IRNode *Create() {
-		return new IRNode(cur_create_ir);
-		//return cur_create_ir;
-	}
+	
+	//
 
-	template<class T, class... Args>
-	static IRNode *Create(T a, Args... args) {
-		if (std::is_same<T, IRType>::value) {
-			cur_create_ir.type = a;
-			if (a >= IRType::add && a <= IRType::div) {
-				cur_create_i = 3;
-			}
-			else if (a == IRType::assign) {
-				cur_create_i = 2;
-			}
-			else if (a == IRType::ret || a== IRType::func) {
-				cur_create_i = 1;
-			}
-			else if (a >= IRType::equal_jump && a <= IRType::le_jump) {
-				cur_create_i = 3;
-			}
-		}
-		else if (std::is_same<T, int>::value) {
-			cur_create_ir.args[3 - cur_create_i--].int_imm = a;
-		}
-		else if (typeid(T) == typeid(float)) {
-			cur_create_ir.args[3 - cur_create_i--].float_imm = a;
-		}
-		else if (typeid(T) == typeid(VarNode *)) {
-			cur_create_ir.args[3 - cur_create_i--].id = a;
-		}
-		else if (typeid(T) == typeid(TempType)) {
-			cur_create_ir.args[3 - cur_create_i--].temp_index = a.temp_index;
-		}
-		else if (typeid(T) == typeid(LabelNode *)) {
-			cur_create_ir.args[3 - cur_create_i--].label = a;
-		}
-		return IRNode::Create(args...);
-	}*/
 };
 
 
@@ -488,9 +452,16 @@ public:
 	bool handle_while_state_1();
 	bool handle_while_state_2();
 
+	bool handle_for_state_1();
+	bool handle_for_state_2();
+	bool handle_for_state_3();
+
 	bool is_parse_if = false;
 	bool is_parse_else = false;
 	bool is_parse_if_end = false;
+
+	IRNode *for_exp_3_head = NULL, *for_exp_3_end = NULL;
+	bool expect_for_exp_3 = false;
 
 	LabelNode *_expect_true_label = NULL, *_expect_false_label = NULL, *_expect_end_label = NULL;
 	LabelNode *_expect_while_to_logic_label = NULL;
@@ -540,6 +511,12 @@ public:
 		}
 	}
 	
+	int ir_num = 0;
+
+	IRNode *getIRHead() {
+		return head;
+	}
+
 private:
 	IRNode *head, *cur;
 

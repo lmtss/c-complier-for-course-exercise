@@ -57,10 +57,11 @@ struct ParamNumError : ErrorNode {
 };
 
 struct NoRetError : ErrorNode {
-	NoRetError(int l) : ErrorNode(NULL, l, ErrorType::no_ret) {
+	NoRetError(FuncNode *f) : ErrorNode(f, 0, ErrorType::no_ret) {
 
 	}
 	void print() {
+		std::cout << "In function \'" << func->name << "\':" << std::endl;
 		std::cout << "no return" << std::endl;
 	}
 };
@@ -84,6 +85,7 @@ public:
 	}
 
 	void addEN(ErrorNode *e) {
+		
 		if (head == NULL) {
 			head = e;
 			cur = e;
