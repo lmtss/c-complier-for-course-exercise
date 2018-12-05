@@ -107,7 +107,7 @@ enum class IRType {
 	equal_jump, unequal_jump, ge_jump, le_jump, greater_jump, less_jump, jump
 };
 struct IRNode {
-	IRArg args[3];
+	IRArg args[3]; // 例: 减法 args[2] := args[1] - args[0]
 	IRType type;
 }
 ```
