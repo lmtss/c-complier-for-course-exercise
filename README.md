@@ -84,6 +84,33 @@ logic-and-exp = rel-exp {|| rel-exp}*
 rel-exp = additive-exp {== | > | < | != | >= | <=} additive-exp
 ```
 ## 中间代码结构
+```cpp
+// 总体结构 oper 参数0 参数1 参数2
+
+// 参数
+enum class IRAType {
+	int_imm, float_imm, 
+ var, func,             // 通过 IDNode *id 这个指针获取, 使用时VarNode *v = (VarNode *)id, FuncNode *f = (FuncNode *)id
+ temp, NONE, jump_label
+};
+struct IRArg {
+	int int_imm;
+	float float_imm;
+	int temp_index; // 
+	IDNode *id;
+	LabelNode *label;
+	IRAType type = IRAType::NONE;
+}
+// 中间代码类型
+enum class IRType {
+	add, sub, mult, div, assign, ret, func, func_call, func_param_in,
+	equal_jump, unequal_jump, ge_jump, le_jump, greater_jump, less_jump, jump
+};
+struct IRNode {
+	IRArg args[3];
+	IRType type;
+}
+```
 ## 符号表api
 ```cpp
 
