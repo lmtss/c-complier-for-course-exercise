@@ -116,6 +116,15 @@ struct IRNode {
 	IRType type;
 }
 ```
+打印形式
+```
+{a} := {b} [op] {c} //+-*/
+{a} := {b}
+if {a} [op] {b} jmp {label}
+jmp {label} //无条件跳转
+call {func_name} {ret}? //函数调用，若函数返回值为void，则不需要ret
+param_in {a} //函数传参
+```
 ## 前端api (大概
 ```cpp
 class FrontEndInterface {
