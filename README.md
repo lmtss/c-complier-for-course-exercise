@@ -88,6 +88,13 @@ logic-and-exp = rel-exp {|| rel-exp}*
 
 rel-exp = additive-exp {== | > | < | != | >= | <=} additive-exp
 ```
+## 错误信息
+```
+Undeclared 
+Redeclared
+ParamNum // 传递参数数量有误
+NoRet // 函数定义时，若此函数返回值不是void且没有return语句，报错
+```
 ## 中间代码结构
 ```cpp
 // 总体结构 oper 参数0 参数1 参数2
