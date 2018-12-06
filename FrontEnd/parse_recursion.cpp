@@ -2,9 +2,9 @@
 #include "ScopeExpect.h"
 #include <iostream>
 Token error_expect_token;
-#define HE(s) if(s == false) { std::cout << "FUCK" << std::endl; irc->ss_wrong_re(); return false;}
-#define expect(t) if(  (error_expect_token = get_token()) != t) { std::cout << "expect token " << (int)t << " get " << (int)error_expect_token  << std::endl; return false;}
-#define expect_range(t1, t2)if(  (error_expect_token = get_token()) < t1 || error_expect_token > t2) { std::cout << "expect token " << (int)t1 << " to " << (int)t2 << " get " << (int)error_expect_token  << std::endl; return false;}
+#define HE(s) if(s == false) { /*std::cout << "FUCK" << std::endl;*/ irc->ss_wrong_re(); return false;}
+#define expect(t) if(  (error_expect_token = get_token()) != t) { /*std::cout << "expect token " << (int)t << " get " << (int)error_expect_token  << std::endl;*/ return false;}
+#define expect_range(t1, t2)if(  (error_expect_token = get_token()) < t1 || error_expect_token > t2) { /*std::cout << "expect token " << (int)t1 << " to " << (int)t2 << " get " << (int)error_expect_token  << std::endl;*/ return false;}
 
 void Parser::parse_translation_unit() {
 	bool meetLCB = false, meetAssign = false, fin = false;

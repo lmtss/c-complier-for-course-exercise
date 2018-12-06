@@ -141,7 +141,7 @@ VarNode* STManager::insert(string& name, int level, TypeNode *type, int line) {
 	id->varType = type;
 	id->level = level;
 	id->declPosLine = line;
-	id->globalIndex = curGlobalIndex;
+	//id->globalIndex = curGlobalIndex;
 
 	curTable->insert(name, id);
 

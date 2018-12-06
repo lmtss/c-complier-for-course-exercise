@@ -32,7 +32,7 @@ struct IDNode {
 struct VarNode : IDNode {
 	TypeNode *varType;
 	int level = -1;//scope²ã¼¶
-	int globalIndex;
+	//int globalIndex;
 };
 
 struct FuncNode : IDNode {

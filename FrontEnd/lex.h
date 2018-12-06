@@ -4,6 +4,7 @@
 #include "SS.h"
 #include<fstream>
 #include<string>
+#include <vector>
 
 extern char *yytext;
 extern ScopeExpect *scopePredictor;
@@ -34,6 +35,7 @@ enum class LexState {
 	less_1,
 	logic_or_1,
 	logic_and_1,
+	d_1, d_2, d_3, d_4,
 
 	// fin
 	int_const = 100, float_const, char_const, 
@@ -62,6 +64,8 @@ public:
 	~Lex();
 	Token lex();
 	void setFP(FILE *fp);
+	void print();
+	void print_for_json();
 private:
 	FILE *fp;
 	LexState curState;
@@ -71,13 +75,15 @@ private:
 	bool needBack;
 	char charBack;
 
-	LexState table[50][127];
+	LexState table[60][127];
 	void(*func[50])();
+	std::vector<Token> token_list;
 
 	void initTable();
 	void initFunc();
 	int getC();
 
+	
 	void _setKTI(LexState s, LexState i);
 	void _setK(LexState k_1, std::string s, LexState k);
 	void _meetLetter(LexState s, LexState i);

@@ -308,6 +308,112 @@ struct IRNode {
 		}
 		std::cout << std::endl;
 	}
+
+	void print_for_json() {
+		switch (type) {
+		case IRType::add:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "+ ";
+			args[0].print();
+			break;
+		case IRType::sub:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "- ";
+			args[0].print();
+			break;
+		case IRType::mult:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "* ";
+			args[0].print();
+			break;
+		case IRType::div:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "/ ";
+			args[0].print();
+			break;
+		case IRType::assign:
+			args[1].print();
+			std::cout << ":= ";
+			args[0].print();
+			break;
+
+		case IRType::ret:
+			std::cout << "return ";
+			args[0].print();
+			break;
+		case IRType::func:
+			std::cout << "function ";
+			args[0].print();
+			break;
+		case IRType::jump:
+			std::cout << "jmp ";
+			args[0].print();
+			break;
+		case IRType::greater_jump:
+			args[0].print();
+			std::cout << "> ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::less_jump:
+			args[0].print();
+			std::cout << "< ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::equal_jump:
+			args[0].print();
+			std::cout << "== ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::unequal_jump:
+			args[0].print();
+			std::cout << "!= ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::ge_jump:
+			args[0].print();
+			std::cout << ">= ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::le_jump:
+			args[0].print();
+			std::cout << "<= ";
+			args[1].print();
+			std::cout << "goto ";
+			args[2].print();
+			break;
+		case IRType::func_call:
+			std::cout << "call ";
+			args[0].print();
+			std::cout << "to ";
+			args[1].print();
+			break;
+		case IRType::func_param_in:
+			std::cout << "param ";
+			args[0].print();
+			break;
+		default:
+			break;
+		}
+	}
+
 	void setArg(int i, IRArg *arg) {
 		args[i].float_imm = arg->float_imm;
 		args[i].int_imm = arg->int_imm;
@@ -363,6 +469,7 @@ public:
 
 
 	void print();
+	void print_json();
 
 	void clear_temp() {
 		//temp_top_index = 0;
@@ -379,7 +486,7 @@ public:
 	void ss_wrong_re() {
 		for (int i = sp_top(); i < ss_len(); i++) {
 			if (ss_stack[i] != NULL) {
-				std::cout << "delete" << (int)ss_stack[i]->type << std::endl ;
+				//std::cout << "delete" << (int)ss_stack[i]->type << std::endl ;
 				delete ss_stack[i];
 			}
 				

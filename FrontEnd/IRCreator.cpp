@@ -134,10 +134,50 @@ void IRCreator::print() {
 	em->print();
 }
 
+void IRCreator::print_json() {
+	//std::cout << "-----------------IR------------------" << std::endl;
+	IRNode *printNode = head;
+	
+	//std::cout << "{" << std::endl; 
+	std::cout << "\"IR\":";
+	std::cout << "[" << std::endl;
+	while (printNode != NULL) {
+		std::cout << "{" << std::endl;
+		std::cout << "\"hasLabel\":";
+		LabelNode *res = label_find(printNode);
+		if (res != NULL) {
+			std::cout << "true," << std::endl;
+			std::cout << "\"label\":" << res->index << "," << std::endl;
+		}
+		else {
+			std::cout << "false," << std::endl;
+		}
+		std::cout << "\"code\":\"";
+		printNode->print_for_json();
+		std::cout << "\"" << std::endl;
+		if(printNode->next != NULL)std::cout << "}," << std::endl;
+		else std::cout << "}" << std::endl;
+		
+		printNode = printNode->next;
+	}
+	std::cout << "]," << std::endl;
+	if (em->hasError()) {
+		std::cout << "\"hasError\":true,"<< std::endl; 
+		std::cout << "\"ERROR\":[" << std::endl;
+		em->print_for_json();
+		std::cout << "]" << std::endl;;
+	}
+	else {
+		std::cout << "\"hasError\":false";
+	}
+	
+	//std::cout << "}";
+}
+
 // private
 void IRCreator::addIRNode(IRNode *node) {
-	std::cout << "IR: ";
-	node->print();
+	//std::cout << "IR: ";
+	//node->print();
 	node->next = NULL;
 	
 

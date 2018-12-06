@@ -19,6 +19,7 @@ struct ErrorNode {
 		type = t;
 	}
 	void virtual print() = 0;
+	void virtual print_for_json() = 0;
 };
 
 struct UndeclaredError : ErrorNode {
@@ -30,6 +31,11 @@ struct UndeclaredError : ErrorNode {
 		std::cout << "In function \'" << func->name << "\':" << std::endl;
 		std::cout << "line " << line << " error: \'" << varName << "\' undeclared" << std::endl;
 	}
+	void print_for_json() {
+		std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		std::cout << "\"line\":" << line << "," << std::endl;
+		std::cout << "\"content\":\"" << "error: " << varName << " undeclared" << "\"" << std::endl;
+	}
 };
 
 struct RedeclaredError : ErrorNode {
@@ -40,6 +46,11 @@ struct RedeclaredError : ErrorNode {
 	void print() {
 		std::cout << "In function \'" << func->name << "\':" << std::endl;
 		std::cout << "line " << line << " error: \'" << varName << "\' redeclared" << std::endl;
+	}
+	void print_for_json() {
+		std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		std::cout << "\"line\":" << line << "," << std::endl;
+		std::cout << "\"content\":\"" << varName << " redeclared" << "\"" << std::endl;
 	}
 };
 
@@ -54,6 +65,10 @@ struct ParamNumError : ErrorNode {
 	void print() {
 		std::cout << "argument num " << "pass " << wrong_num << " arg, should pass " << correct_num << " arg" << std::endl;
 	}
+	void print_for_json() {
+		std::cout << "\"func\":\"" << "null" << "\"," << std::endl;
+		std::cout << "\"content\":\"" << "argument num " << "pass " << wrong_num << " arg, should pass " << correct_num << " arg" << "\"" << std::endl;
+	}
 };
 
 struct NoRetError : ErrorNode {
@@ -63,6 +78,10 @@ struct NoRetError : ErrorNode {
 	void print() {
 		std::cout << "In function \'" << func->name << "\':" << std::endl;
 		std::cout << "no return" << std::endl;
+	}
+	void print_for_json() {
+		std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		std::cout << "\"content\":\"" << "no return" << "\"" << std::endl;
 	}
 };
 
@@ -94,8 +113,8 @@ public:
 			cur->next = e;
 			cur = e;
 		}
-		e->print();
-		
+		//e->print();
+		has_error = true;
 	}
 
 	void print() {
@@ -105,7 +124,20 @@ public:
 			node = node->next;
 		}
 	}
-
+	void print_for_json() {
+		ErrorNode *node = head;
+		while (node != NULL) {
+			std::cout << "{" << std::endl;
+			
+			node->print_for_json();
+			
+			if (node->next != NULL)std::cout << "}," << std::endl;
+			else std::cout << "}" << std::endl;
+			node = node->next;
+		}
+	}
+	bool hasError() { return has_error; }
 private:
 	ErrorNode *head, *cur;
+	bool has_error = false;
 };
