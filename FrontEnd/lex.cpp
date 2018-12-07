@@ -125,7 +125,7 @@ void Lex::initTable() {
 
 	// =
 	
-	for (int i = ' '; i < '~'; i++) {
+	for (int i = 0; i < 127; i++) {
 		table[(int)LexState::equal_1][i] = LexState::assign;
 		table[(int)LexState::less_1][i] = LexState::less;
 		table[(int)LexState::greater_1][i] = LexState::greater;
@@ -224,8 +224,8 @@ Token Lex::lex() {
 		if (c == '\t')
 			c = ' ';
 		LexState res = table[(int)curState][c];
-		if ((int)res >= 100 && (int)res < 200) {
-			if ((int)res < 120 || (int)res >= 135 || res == LexState::divide) {
+		if ((int)res >= 100 && res < LexState::error) {
+			if ((int)res < 120 || res >= LexState::greater || res == LexState::divide) {
 				needBack = true;
 				charBack = c;
 				yytext[bufPos] = '\0';
@@ -293,7 +293,7 @@ void Lex::print() {
 }
 
 void Lex::print_for_json() {
-	int id_index = 0, int_const_index = 0, float_const_index = 0;
+	int id_index = 0, int_const_index = 0, float_const_index = 0, char_const_index = 0;
 	std::cout << "\"Token\":" << "\"";
 	for (int i = 0; i < token_list.size(); i++) {
 		Token t = token_list[i];
@@ -301,7 +301,19 @@ void Lex::print_for_json() {
 			std::cout << "<" << "id, " << id_index++ << ">";
 		}
 		else if (t == Token::int_const) {
-			std::cout << "<" << "id, " << id_index++ << ">";
+			std::cout << "<" << "int_const, " << int_const_index++ << ">";
+		}
+		else if (t == Token::float_const) {
+			std::cout << "<" << "float_const, " << float_const_index++ << ">";
+		}
+		else if (t >= Token::int_k && t <= Token::else_k) {
+			std::cout << "<" << "k, " << (t - Token::int_k + 1) << ">";
+		}
+		else if (t >= Token::LCB && t <= Token::assign) {
+			std::cout << "<" << "p, " << (t - Token::LCB + 1) << ">";
+		}
+		else if (t == Token::char_const) {
+			std::cout << "<" << "char_const, " << char_const_index++ << ">";
 		}
 	}
 	std::cout << "\",";

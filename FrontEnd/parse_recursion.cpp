@@ -618,6 +618,7 @@ bool Parser::parse_logic_or_exp() {
 bool Parser::parse_logic_and_exp() {
 	irc->new_sp();
 	//HE(irc->handle_logic_and_exp_1());
+	irc->expect_for_and_exp = true;
 	HE(parse_rel_exp());
 	while (expect_token() == Token::logic_and) {
 		get_token();
@@ -634,6 +635,7 @@ bool Parser::parse_rel_exp() {
 
 	irc->new_sp();
 
+	irc->expect_for_rel_exp = true;
 	HE(parse_additive_exp());
 	Token t;
 	expect_range(Token::double_equal, Token::less);

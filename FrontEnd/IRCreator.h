@@ -511,7 +511,7 @@ public:
 	}
 	SSNode *ss_get(int i) { return ss_stack[i]; }
 
-	void jump_stack_push(IRNode *ti, IRNode *fi) {
+	/*void jump_stack_push(IRNode *ti, IRNode *fi) {
 		true_jump_stack[jump_stack_index] = ti;
 		false_jump_stack[jump_stack_index] = fi;
 		jump_stack_index++;
@@ -525,7 +525,7 @@ public:
 	void js_pop_sp() {
 		js_sp_index--;
 	}
-	int js_sp_top() { return js_sp_stack[js_sp_index - 1]; }
+	int js_sp_top() { return js_sp_stack[js_sp_index - 1]; }*/
 	
 
 	// exp
@@ -567,6 +567,8 @@ public:
 	bool is_parse_else = false;
 	bool is_parse_if_end = false;
 
+	IRNode *rel_exp_first = NULL, *and_exp_first = NULL;
+	bool expect_for_rel_exp = false, expect_for_and_exp = false;
 	IRNode *for_exp_3_head = NULL, *for_exp_3_end = NULL;
 	bool expect_for_exp_3 = false;
 

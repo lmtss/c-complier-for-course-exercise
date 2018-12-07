@@ -192,6 +192,14 @@ void IRCreator::addIRNode(IRNode *node) {
 			node->front = cur;
 			cur = node;
 		}
+		if (expect_for_rel_exp) {
+			rel_exp_first = node;
+			expect_for_rel_exp = false;
+		}
+		if (expect_for_and_exp) {
+			and_exp_first = node;
+			expect_for_and_exp = false;
+		}
 
 		if (is_parse_if) {
 			_expect_true_label->target = node;
@@ -347,7 +355,8 @@ bool IRCreator::handle_logic_and_exp_2() {
 
 	if (bro_true_node != NULL && bro_true_node->type == SSType::label && bro_true_node != ss_get(start_index)) {
 		//std::cout << "########################" << std::endl;
-		bro_false_node->label->target = ss_get(start_index)->label->from;
+		//bro_false_node->label->target = ss_get(start_index)->label->from;
+		bro_false_node->label->target = and_exp_first;
 		label_finish(bro_false_node->label);
 		true_label = bro_true_node->label;
 		ss_get(fin_index - 2)->label->from->setArg(2, true_label);
@@ -391,7 +400,7 @@ bool IRCreator::handle_rel_exp(Token op) {
 	if (bro_true_node != NULL && bro_true_node->type == SSType::label) {
 		false_label = bro_false_node->label;
 		//
-		ss_get(start_index - 2)->label->target = true_jump;
+		ss_get(start_index - 2)->label->target = rel_exp_first;
 		label_finish(ss_get(start_index - 2)->label);
 	}
 	else {
