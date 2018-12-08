@@ -115,11 +115,16 @@ struct IRArg {
 }
 // 中间代码类型
 enum class IRType {
-	add, sub, mult, div, assign, ret, func, func_call, func_param_in,
-	equal_jump, unequal_jump, ge_jump, le_jump, greater_jump, less_jump, jump
+	add, sub, mult, div, assign, 
+	ret, // return 语句
+	func, func_call, func_param_in, // 函数定义, 函数调用, 函数传参
+	equal_jump, unequal_jump, 
+	ge_jump, le_jump, // >= <=
+	greater_jump, less_jump, 
+	jump
 };
 struct IRNode {
-	IRArg args[3]; // 例: 减法 args[2] := args[1] - args[0]
+	IRArg args[3]; // 例: 减法 args[2] := args[1] - args[0], 赋值 args[1] := args[0]
 	IRType type;
 }
 ```
