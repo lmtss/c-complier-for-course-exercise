@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 
 using namespace std;
 
@@ -29,10 +30,42 @@ struct IDNode {
 
 };
 
+struct TempNode {
+
+	int index;
+
+	int reg_index = -1;
+	int stack_address = -1;
+	bool has_reg = false;
+	bool at_reg = true;
+
+	bool flag_live_scan = false;
+
+	TempNode(int i) {
+		index = i;
+		/*if (temp_list.size() <= i) {
+			temp_list.push_back(this);
+		}
+		else {
+			temp_list[i] = this;
+		}*/
+		
+	}
+
+	//static vector<TempNode*> temp_list;
+};
+
 struct VarNode : IDNode {
 	TypeNode *varType;
 	int level = -1;//scope²ã¼¶
-	//int globalIndex;
+
+	int reg_index = -1;
+	int stack_address = -1;
+	bool has_reg = false;
+	bool at_reg = true;
+
+	bool flag_live_scan = false;
+	bool flag_global_scan = false;
 };
 
 struct FuncNode : IDNode {
@@ -41,6 +74,10 @@ struct FuncNode : IDNode {
 	int param_num;
 	vector<VarNode*> paraList;
 	SymbolTable *table;
+
+	int cur_address = 0;
+	int size = 0;
+	int max_arg_size = 0;
 };
 
 class SymbolTable {
@@ -49,12 +86,21 @@ public:
 	~SymbolTable();
 	VarNode* find(string& str) const;
 	void insert(string& name, VarNode *id);
+	void traverse(function<void(VarNode*)> func) {
+		map<string, VarNode*>::iterator it;
+		it = table.begin();
+		while (it != table.end()) {
+			func(it->second);
+			it++;
+		}
+	}
 
 	SymbolTable *father;
 	BlockType type;
-private:
 	map<string, VarNode*> table;
-	
+private:
+	/*int cur_address = 0;
+	SymbolTable *func = NULL;*/
 };
 
 class STManager {
@@ -69,6 +115,12 @@ public:
 	VarNode* findCurTable(string& str) const;
 	FuncNode* findFunc(string& str) const;
 	VarNode* insert(string& name, int level, TypeNode *type, int line);
+	void insert(int i) {
+		temp_list.push_back(new TempNode(i));
+	}
+	void insert(TempNode *temp) {
+		temp_list.push_back(temp);
+	}
 	//FuncNode* insertFunc(string& name, )
 	void insertFunc(FuncNode *f);
 
@@ -77,6 +129,9 @@ public:
 	int getCurLevel() {return curLevel;}
 	BlockType getCurBlockType() { return curTable->type; }
 	FuncNode *getCurFunc() { return curFunc; }
+	SymbolTable *getWholeTable() { return wholeTable; }
+
+	vector<TempNode*> temp_list;
 private:
 	SymbolTable *wholeTable;
 	SymbolTable *curTable;
@@ -85,11 +140,11 @@ private:
 
 	int curLevel;
 	int curGlobalIndex;
-
+	
 	map<string, FuncNode*> funcTable;
 
 	TypeNode bTypes[4] = {
-		{"int", 0},{ "float", 0 },{ "void", 0 },{ "int", 0 }
+		{"int", 4},{ "float", 0 },{ "void", 0 },{ "", 0 }
 	};
 
 };

@@ -10,6 +10,7 @@ enum class SSType {
 
 struct IRNode;
 struct LabelNode;
+struct TempNode;
 
 struct SSNode {
 	SSType type;
@@ -17,7 +18,9 @@ struct SSNode {
 	std::string string_val;
 	int int_val;
 	float float_val;
+	char char_val;
 	LabelNode *label;
+	TempNode *temp;
 
 	SSNode(SSNode *n) : string_val() {
 		type = n->type;
@@ -36,6 +39,15 @@ struct SSNode {
 		}
 		else if (type == SSType::float_const) {
 			float_val = std::stof(string_val);
+		}
+		else if (type == SSType::char_const) {
+			if (string_val.length() > 3) {
+				if (string_val[1] == 'n')
+					char_val = '\n';
+			}
+			else {
+				char_val = string_val[1];
+			}
 		}
 	}
 
@@ -57,6 +69,12 @@ struct SSNode {
 		type = SSType::label;
 		code_line = -1;
 		label = l;
+	}
+
+	SSNode(TempNode *t) : string_val() {
+		temp = t;
+		type = SSType::temp_var;
+		code_line = -1;
 	}
 
 

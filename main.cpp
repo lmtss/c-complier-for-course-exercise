@@ -5,7 +5,10 @@
 #include "FrontEnd/SymbolTable.h"
 #include "FrontEnd/IRCreator.h"
 #include "FrontEndInterface.h"
+#include "RegAllocator.h"
+#include "ASMCreator.h"
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <type_traits>
 
@@ -23,18 +26,27 @@ int main(int argc, char *argv[]) {
 	yytext[0] = '\0';
 
 	FILE *fp = NULL;
-
+	FILE *asm_save_fp = NULL;
+	fstream out;
 	bool is_print_to_json = false;
 
 	if (argc > 1) {
 		fp = fopen(argv[1], "r");
-		if (argc > 2 && argv[2][0] == 't') {
-			is_print_to_json = true;
+		if (argc > 2) {
+			asm_save_fp = NULL;
+			if (argc > 3 && argv[3][0] == 't') {
+				is_print_to_json = true;
+			}
+		}
+		else {
+			//asm_save_fp = fopen("C:/Users/Lenovo-/Desktop/asm.s", "w");
+			out.open("C:/Users/Lenovo-/Desktop/asm.s", ios::out);
 		}
 	}
 	else {
 		//std::cout << "SSSSSSSSSSSSS";
 		fp = fopen("C:/Users/Lenovo-/Desktop/tt.c", "r");
+		out.open("C:/Users/Lenovo-/Desktop/asm.s", ios::out);
 	}
 
 	lex = new Lex();
@@ -69,8 +81,19 @@ int main(int argc, char *argv[]) {
 	}
 	
 
-	FrontEndInterface *FEI = new FrontEndInterface(irCreator);
+	FrontEndInterface *FEI = new FrontEndInterface(irCreator, stManager);
+	RegAllocator *alloc = new RegAllocator(FEI);
+	ASMCreator *ac = new ASMCreator(FEI, alloc, out);
+	ac->create_head();
 
-	//system("pause");
+	alloc->alloc(0, FEI->ir_list.size());
+	
+	ac->create_block(0, FEI->ir_list.size());
+
+
+	if (fp != NULL) {
+		fclose(fp);
+	}
+	system("pause");
 	return 0;
 }

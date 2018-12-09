@@ -36,6 +36,7 @@ void Lex::initTable() {
 	table[0]['w'] = LexState::while_1;
 	table[0]['v'] = LexState::void_1;
 	table[0]['e'] = LexState::else_1;
+	table[0]['p'] = LexState::print_1;
 
 	table[0]['\''] = LexState::char_const_1;
 
@@ -65,7 +66,7 @@ void Lex::initTable() {
 	table[0]['-'] = LexState::substract;
 
 	// key
-	for (int j = (int)LexState::int_1; j < (int)LexState::else_4; j++) {
+	for (int j = (int)LexState::int_1; j < (int)LexState::print_5; j++) {
 		for (int i = 'a'; i <= 'z'; i++)
 			table[j][i] = LexState::ID;
 		for (int i = 'A'; i <= 'Z'; i++)
@@ -103,6 +104,8 @@ void Lex::initTable() {
 
 	_setK(LexState::else_1, "lse", LexState::else_k);
 
+	_setK(LexState::print_1, "rint", LexState::print_k);
+
 	table[(int)LexState::int_1]['f'] = LexState::if_2;
 	_setKTI(LexState::if_2, LexState::if_k);
 	table[(int)LexState::float_1]['o'] = LexState::for_2;
@@ -123,6 +126,13 @@ void Lex::initTable() {
 	table[(int)LexState::digit_1]['.'] = LexState::digit_2;
 	_setKTI(LexState::digit_2, LexState::float_const);
 
+	// char_const
+	for (int i = 0; i < 127; i++) {
+		table[(int)LexState::char_const_1][i] = LexState::char_const_3;
+		table[(int)LexState::char_const_2][i] = LexState::char_const_3;
+	}
+	table[(int)LexState::char_const_1]['\\'] = LexState::char_const_2;
+	table[(int)LexState::char_const_3]['\''] = LexState::char_const;
 	// =
 	
 	for (int i = 0; i < 127; i++) {
@@ -176,7 +186,7 @@ void Lex::initFunc() {
 	func[Token::else_k] = [] { /*lexVal = new SSNode(SSType::else_k, yylineno, yytext);*/ };
 	func[Token::int_const] = [] {lexVal = new SSNode(SSType::int_const, yylineno, yytext); };
 	func[Token::float_const] = [] {lexVal = new SSNode(SSType::float_const, yylineno, yytext); };
-
+	func[Token::char_const] = [] {lexVal = new SSNode(SSType::char_const, yylineno, yytext); };
 }
 
 void Lex::_meetDigit(LexState s, LexState f) {
@@ -225,7 +235,7 @@ Token Lex::lex() {
 			c = ' ';
 		LexState res = table[(int)curState][c];
 		if ((int)res >= 100 && res < LexState::error) {
-			if ((int)res < 120 || res >= LexState::greater || res == LexState::divide) {
+			if ((int)res < 120 && res != LexState::char_const || res >= LexState::greater || res == LexState::divide) {
 				needBack = true;
 				charBack = c;
 				yytext[bufPos] = '\0';

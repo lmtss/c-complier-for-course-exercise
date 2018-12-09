@@ -79,6 +79,7 @@ void IRCreator::funcExpect() {
 	for (int i = 0; i < func->param_num; i++) {
 		func->table->insert(func->paraList[i]->name, func->paraList[i]);
 		func->paraList[i]->level = stm->getCurLevel();
+		func->cur_address += func->paraList[i]->varType->len;
 	}
 
 	IRNode *ir = new IRNode(IRType::func, NULL);
@@ -86,21 +87,32 @@ void IRCreator::funcExpect() {
 	
 	addIRNode(ir);
 
-	if (func->retType != stm->getBasicType(2)) {
+	if (func->retType == stm->getBasicType(2)) {
 		//std::cout << "expect return" << std::endl;
-		has_return = false;
+		//has_return = false;
+		is_void_func = true;
 	}
+	has_return = false;
 }
 bool IRCreator::handle_func_def() {
 	//std::cout << "adasdas " << ss_len() - sp_top();
 	for (int i = sp_top(); i < ss_len() + 1; i++)
 		ss_pop();
-	if (!has_return) {
+	if (!has_return && !is_void_func) {
+		if (is_void_func) {
+			IRNode *ir = new IRNode(IRType::ret, NULL);
+			addIRNode(ir);
+		}
+		else {
+			NoRetError *e = new NoRetError(stm->getCurFunc());
+			em->addEN(e);
+			return false;
+		}
 		
-		NoRetError *e = new NoRetError(stm->getCurFunc());
-		em->addEN(e);
-		return false;
 	}
+	FuncNode *func = stm->getCurFunc();
+	func->isDefinied = true;
+	func->size = func->cur_address + func->max_arg_size + 8;
 	return true;
 }
 void IRCreator::meetRCB() {
@@ -248,7 +260,8 @@ bool IRCreator::handle_return_state() {
 	SSNode *ret = ss_get(sp_top());
 	IRNode *ir = NULL;
 	ir = new IRNode(IRType::ret, NULL);
-	set_arg(ir, 0, ret);
+	_ir_set_arg(set_arg(ir, 0, ret))
+	//set_arg(ir, 0, ret);
 	/*if (ret->type == SSType::identifier) {
 		VarNode *var = NULL;
 		_handle_var_undecl(var, ret);
@@ -279,7 +292,7 @@ bool IRCreator::handle_logic_exp() {
 
 bool IRCreator::handle_if_state_1() {
 	if (_expect_end_label == NULL) {
-		IRNode *ir = new IRNode(IRType::jump);
+		IRNode *ir = new IRNode(IRType::jump, NULL);
 		LabelNode *label = new LabelNode(NULL, ir);
 		ir->setArg(0, label);
 		//ss_push(new SSNode(label));
@@ -287,7 +300,7 @@ bool IRCreator::handle_if_state_1() {
 		_expect_end_label = label;
 	}
 	else {
-		IRNode *ir = new IRNode(IRType::jump);
+		IRNode *ir = new IRNode(IRType::jump, NULL);
 		ir->setArg(0, _expect_end_label);
 		//ss_push(new SSNode(label));
 		addIRNode(ir);
@@ -387,8 +400,8 @@ bool IRCreator::handle_rel_exp(Token op) {
 	addIRNode(true_jump);
 	addIRNode(false_jump);
 
-	set_arg(true_jump, 0, rel_left);
-	set_arg(true_jump, 1, rel_right);
+	_set_arg(true_jump, 0, rel_left);
+	_set_arg(true_jump, 1, rel_right);
 
 	ss_pop();
 	ss_pop();
@@ -442,7 +455,7 @@ bool IRCreator::handle_func_call() {
 	// ´«²Î
 	for (int i = start_index + 1; i < fin_index; i++) {
 		param_in = new IRNode(IRType::func_param_in, NULL);
-		set_arg(param_in, 0, ss_get(i));
+		_set_arg(param_in, 0, ss_get(i));
 		addIRNode(param_in);
 	}
 	for (int i = start_index; i < fin_index; i++) {
@@ -450,9 +463,16 @@ bool IRCreator::handle_func_call() {
 	}
 	// void ?
 	if (func->retType != stm->getBasicType(2)) {
-		int temp = temp_top_index++;
-		ir->setArg(1, TempType(temp));
-		ss_push(new SSNode(SSType::temp_var, 0, temp));
+		TempNode *temp = new TempNode(temp_top_index++);
+		stm->insert(temp);
+		//int temp = temp_top_index++;
+		ir->setArg(1, temp);
+		ss_push(new SSNode(temp));
+	}
+
+	FuncNode *caller_func = stm->getCurFunc();
+	if (caller_func->max_arg_size < func->param_num * 4) {
+		caller_func->max_arg_size = func->param_num * 4;
 	}
 
 	return true;
@@ -509,6 +529,20 @@ bool IRCreator::handle_for_state_3() {
 	for (; e3_cur != NULL; e3_cur = e3_t) {
 		e3_t = e3_cur->next;
 		addIRNode(e3_cur);
+	}
+	return true;
+}
+
+bool IRCreator::handle_print_state() {
+	int start_index = sp_top(), fin_index = ss_len();
+	for (int i = start_index; i < fin_index; i++) {
+		IRNode *ir = new IRNode(IRType::print, NULL);
+		SSNode *node = ss_get(i);
+		_set_arg(ir, 0, node)
+		addIRNode(ir);
+	}
+	for (int i = start_index; i < fin_index; i++) {
+		ss_pop();
 	}
 	return true;
 }

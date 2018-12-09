@@ -1,5 +1,5 @@
 #include "IRCreator.h"
-
+#include "SymbolTable.h"
 
 void IRCreator::handle_decl() {
 	ss_pop();
@@ -24,21 +24,9 @@ bool IRCreator::handle_init_declarator() {
 		if (declarator_index != fin_index - 1) {
 			IRNode *ir = NULL;
 			SSNode *initializer = ss_get(declarator_index + 1);
-			if (initializer->type == SSType::identifier) {
-				VarNode *var = NULL;
-				_handle_var_undecl(var, initializer);
-				ir = new IRNode(IRType::assign, IRAType::var, var, IRAType::var, insert_res);
-			}
-			else if (initializer->type == SSType::temp_var) {
-				ir = new IRNode(IRType::assign, IRAType::temp, initializer->int_val, IRAType::var, insert_res);
-			}
-			else if (initializer->type == SSType::int_const) {
-				ir = new IRNode(IRType::assign, IRAType::int_imm, initializer->int_val, IRAType::var, insert_res);
-			}
-			else if (initializer->type == SSType::float_const) {
-
-				ir = new IRNode(IRType::assign, IRAType::float_imm, initializer->float_val, IRAType::var, insert_res);
-			}
+			ir = new IRNode(IRType::assign, NULL);
+			ir->setArg(1, insert_res);
+			_set_arg(ir, 0, initializer);
 			addIRNode(ir);
 		}
 	}

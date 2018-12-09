@@ -16,9 +16,9 @@ extern SSNode *lexVal;
 extern int yylineno;
 
 enum class LexState {
-	Start = 0, 
-	ID, 
-	digit_1 = 2, digit_2, 
+	Start = 0,
+	ID,
+	digit_1 = 2, digit_2,
 	int_1 = 4, int_2, int_3,
 	if_2 = 7,
 	char_1 = 8, char_2, char_3, char_4,
@@ -29,8 +29,9 @@ enum class LexState {
 	while_1 = 29, while_2, while_3, while_4, while_5,
 	bool_1 = 34, bool_2, bool_3, bool_4,
 	else_1 = 38, else_2, else_3, else_4,
-	char_const_1 = 42, char_const_2,
-	equal_1 = 44,
+	print_1, print_2, print_3, print_4, print_5,
+	char_const_1, char_const_2, char_const_3,
+	equal_1,
 	greater_1,
 	less_1,
 	logic_or_1,
@@ -38,9 +39,9 @@ enum class LexState {
 	d_1, d_2, d_3, d_4,
 
 	// fin
-	int_const = 100, float_const, char_const, 
+	int_const = 100, float_const, char_const,
 	int_k, float_k, char_k, bool_k, void_k,
-	return_k, for_k, while_k, if_k, else_k,
+	return_k, for_k, while_k, if_k, else_k, print_k,
 	identifier,
 	
 	//120 { } ( ) . ; , 
@@ -48,8 +49,9 @@ enum class LexState {
 	// * / + -
 	multiply = 129, divide, add, substract,
 	logic_or, logic_and,
+	
 	// == >= <= > < =
-	double_equal = 135, unequal,greater_equal, less_equal, greater, less, assign,
+	double_equal, unequal,greater_equal, less_equal, greater, less, assign,
 	
 	
 	

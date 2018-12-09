@@ -279,10 +279,16 @@ bool Parser::parse_state() {
 		get_token();
 		HE(parse_for_state());
 	}
+	else if (t == Token::print_k) {
+		get_token();
+		HE(parse_print_state());
+	}
 	else {
 		expect_clear();
 		HE(parse_exp_state());
 	}
+	irc->handle_state();
+	//irc->ss_print();
 
 	irc->pop_sp();
 
@@ -340,6 +346,14 @@ bool Parser::parse_if_state() {
 	return true;
 }
 
+bool Parser::parse_print_state() {
+	irc->new_sp();
+	HE(parse_call_arg_list());
+	irc->handle_print_state();
+	irc->pop_sp();
+	return true;
+}
+
 bool Parser::parse_exp_state() {
 	if (expect_token() == Token::semicolon) {
 		get_token();
@@ -354,6 +368,7 @@ bool Parser::parse_exp_state() {
 
 		irc->pop_sp();
 	}
+	
 	return true;
 }
 
@@ -368,7 +383,7 @@ bool Parser::parse_exp() {
 		HE(parse_assign_exp());
 
 		irc->ss_pop();
-		irc->clear_temp();
+		//irc->clear_temp();
 	}
 	expect_clear();
 
@@ -577,6 +592,9 @@ bool Parser::parse_const() {
 
 	}
 	else if (t == Token::float_const) {
+		irc->ss_push(val());
+	}
+	else if (t == Token::char_const) {
 		irc->ss_push(val());
 	}
 	else {
