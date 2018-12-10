@@ -124,7 +124,8 @@ enum class IRType {
 	jump
 };
 struct IRNode {
-	IRArg args[3]; // 例: 减法 args[2] := args[1] - args[0], 赋值 args[1] := args[0]
+	IRArg args[3]; 
+	// 例: 减法 args[2] := args[1] - args[0], 赋值 args[1] := args[0], 跳转 if args[0] > args[1] jmp args[2], 无条件jmp args[0]
 	IRType type;
 }
 ```
