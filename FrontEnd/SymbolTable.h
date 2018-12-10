@@ -66,6 +66,12 @@ struct VarNode : IDNode {
 
 	bool flag_live_scan = false;
 	bool flag_global_scan = false;
+
+	int arg_index = -1;
+	bool is_arg = false;
+
+	bool is_useless = true;
+
 };
 
 struct FuncNode : IDNode {
@@ -75,7 +81,7 @@ struct FuncNode : IDNode {
 	vector<VarNode*> paraList;
 	SymbolTable *table;
 
-	int cur_address = 0;
+	//int cur_address = 0;
 	int size = 0;
 	int max_arg_size = 0;
 };

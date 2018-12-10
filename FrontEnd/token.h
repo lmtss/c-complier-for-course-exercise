@@ -20,3 +20,4 @@ enum Token {
 	error = 500,
 	END = 600
 };
+

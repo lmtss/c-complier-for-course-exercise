@@ -78,7 +78,14 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 		for (int i = 0; i < 3; i++) {
 			if (ir->args[i].type == IRAType::var) {
 				VarNode *var = ir->args[i].getVar();
-				if (!var->flag_live_scan) {
+				var->is_useless = false;
+				if (var->is_arg && var->arg_index < 4) {
+					var->reg_index = var->arg_index + 4;
+					//std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA " << var->name << std::endl;
+					var->at_reg = true;
+					var->has_reg = true;
+				}
+				else if (!var->flag_live_scan) {
 					var_live_range_num++;
 					var->flag_live_scan = true;
 					if (var_live_range_num > 7) {
@@ -87,7 +94,7 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 					else {
 						var->has_reg = true;
 						var->at_reg = true;
-						var->reg_index = var_live_range_num - 1;
+						var->reg_index = var_live_range_num - 1 + 16;
 						sregs[var_live_range_num - 1] = var;
 					}
 				}
@@ -104,7 +111,7 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 					else {
 						t->has_reg = true;
 						t->at_reg = true;
-						t->reg_index = temp_live_range_num - 1;
+						t->reg_index = temp_live_range_num - 1 + 8;
 						tregs[temp_live_range_num - 1] = t;
 					}
 				}

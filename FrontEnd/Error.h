@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 enum ErrorType {
-	undeclared, redeclared, param_num, no_ret
+	undeclared, redeclared, param_num, no_ret, token
 };
 
 struct ErrorNode {
@@ -82,6 +82,27 @@ struct NoRetError : ErrorNode {
 	void print_for_json() {
 		std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
 		std::cout << "\"content\":\"" << "no return" << "\"" << std::endl;
+	}
+};
+
+struct TokenError : ErrorNode {
+	char *token;
+	TokenError(FuncNode *f, int l, char *t) : ErrorNode(f, l, ErrorType::token) {
+		token = t;
+	}
+	void print() {
+		if(func != NULL)
+			std::cout << "In function \'" << func->name << "\':" << std::endl;
+
+		std::cout << "expect token " << token << std::endl;
+	}
+	void print_for_json() {
+		if(func != NULL)
+			std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		else
+			std::cout << "\"func\":\"" << "whole_scope" << "\"," << std::endl;
+		std::cout << "\"line\":" << line << "," << std::endl;
+		std::cout << "\"content\":\"expect token " << token << " redeclared" << "\"" << std::endl;
 	}
 };
 

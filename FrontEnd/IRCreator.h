@@ -460,7 +460,8 @@ public:
 		js_sp_index--;
 	}
 	int js_sp_top() { return js_sp_stack[js_sp_index - 1]; }*/
-	
+	// parse error
+	void handle_token_error(int line, Token t);
 
 	// exp
 	bool handle_assign_exp();
@@ -543,13 +544,6 @@ private:
 	std::vector<int> ss_sp_stack;
 	int ss_sp_index = 0;
 
-	/*std::vector<IRNode *> true_jump_stack;
-	std::vector<IRNode *> false_jump_stack;
-	int jump_stack_index = 0;
-
-	std::vector<int> js_sp_stack;
-	int js_sp_index = 0;*/
-
 	std::map<IRNode*, LabelNode*> label_map;
 	int label_index = 0;
 
@@ -605,4 +599,15 @@ private:
 			label->index = same_label->index;
 		}
 	}
+	char *token_string[42] = {
+		"int_const", "float_const", "char_const",
+		"int_k", "float_k", "char_k", "bool_k", "void_k",
+		"return_k", "for_k", "while_k", "if_k", "else_k", "print_k",
+		"identifier",
+		"","","","","",
+		"LCB", "RCB", "LB", "RB", "LSB", "RSB", "dot", "semicolon", "comma",
+		"multiply", "divide", "add", "substract",
+		"logic_or", "logic_and",
+		"double_equal", "unequal", "greater_equal", "less_equal", "greater", "less", "assign"
+	};
 };

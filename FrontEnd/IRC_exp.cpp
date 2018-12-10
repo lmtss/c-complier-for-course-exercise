@@ -125,8 +125,8 @@ bool IRCreator::handle_additive_exp() {
 					type = ss_get(first_ti - 1)->type == SSType::add ? IRType::add : IRType::sub;
 				ir = new IRNode(type, NULL);
 				
-				ir->setArg(1, (int)x_const);
-				_set_arg(ir, 0, node);
+				ir->setArg(0, (int)x_const);
+				_set_arg(ir, 1, node);
 				//set_arg(ir, 1, node);
 				ir->setArg(2, temp);
 				addIRNode(ir);

@@ -13,6 +13,8 @@ struct TokenPool {
 	SSNode *astNodes[100];
 	TokenPool() {
 		head = end = expect = 0;
+		for (int i = 0; i < 100; i++)
+			astNodes[100] = NULL;
 	}
 	void push(Token t, SSNode *node) {
 		tokens[end] = t;
@@ -40,7 +42,9 @@ struct TokenPool {
 		return expect == end;
 	}
 	SSNode *val() {
-		return astNodes[head];
+		SSNode *node = astNodes[head];
+		astNodes[head] = NULL;
+		return node;
 	}
 };
 
@@ -115,4 +119,6 @@ private:
 
 	ScopeExpect *sp;
 	IRCreator *irc;
+
+	int cur_line = 0;
 };

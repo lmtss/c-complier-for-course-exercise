@@ -27,6 +27,8 @@ Token Parser::get_token() {
 	else {
 		ret = _token_pool.front();
 		lex_val = _token_pool.val();
+		if (lex_val != NULL)
+			cur_line = lex_val->code_line;
 		_token_pool.pop();
 	}
 	//std::cout << "get_token " << (int)ret << std::endl;

@@ -33,18 +33,16 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		fp = fopen(argv[1], "r");
 		if (argc > 2) {
-			asm_save_fp = NULL;
+			out.open(argv[2], ios::out);
 			if (argc > 3 && argv[3][0] == 't') {
 				is_print_to_json = true;
 			}
 		}
 		else {
-			//asm_save_fp = fopen("C:/Users/Lenovo-/Desktop/asm.s", "w");
 			out.open("C:/Users/Lenovo-/Desktop/asm.s", ios::out);
 		}
 	}
 	else {
-		//std::cout << "SSSSSSSSSSSSS";
 		fp = fopen("C:/Users/Lenovo-/Desktop/tt.c", "r");
 		out.open("C:/Users/Lenovo-/Desktop/asm.s", ios::out);
 	}
@@ -74,7 +72,7 @@ int main(int argc, char *argv[]) {
 		std::cout << "{" << std::endl;
 		lex->print_for_json();
 		irCreator->print_json();
-		std::cout << "}" << std::endl;
+		
 	}
 	else {
 		irCreator->print();
@@ -83,17 +81,20 @@ int main(int argc, char *argv[]) {
 
 	FrontEndInterface *FEI = new FrontEndInterface(irCreator, stManager);
 	RegAllocator *alloc = new RegAllocator(FEI);
-	ASMCreator *ac = new ASMCreator(FEI, alloc, out);
+	ASMCreator *ac = new ASMCreator(FEI, alloc, out, false);
 	ac->create_head();
 
 	alloc->alloc(0, FEI->ir_list.size());
 	
 	ac->create_block(0, FEI->ir_list.size());
 
+	if (is_print_to_json) {
+		std::cout << "}" << std::endl;
+	}
 
 	if (fp != NULL) {
 		fclose(fp);
 	}
-	system("pause");
+	//system("pause");
 	return 0;
 }

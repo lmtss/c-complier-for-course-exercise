@@ -1,5 +1,5 @@
 #include "IRCreator.h"
-
+#include "token.h"
 
 IRCreator::IRCreator() : ss_stack(200, NULL), ss_sp_stack(200, NULL) {
 	head = NULL;
@@ -15,7 +15,11 @@ void IRCreator::setSTM(STManager *s) {
 	stm = s;
 }
 
-
+void IRCreator::handle_token_error(int line, Token t) {
+	FuncNode *func = stm->getCurFunc();
+	TokenError *e = new TokenError(func, line, token_string[t]);
+	em->addEN(e);
+}
 
 void IRCreator::expState() {
 	//handleExpression(expStateNode->children[0]);
@@ -77,9 +81,12 @@ void IRCreator::funcExpect() {
 	
 	func->table = stm->addFunc(func);
 	for (int i = 0; i < func->param_num; i++) {
-		func->table->insert(func->paraList[i]->name, func->paraList[i]);
-		func->paraList[i]->level = stm->getCurLevel();
-		func->cur_address += func->paraList[i]->varType->len;
+		VarNode *var = func->paraList[i];
+		func->table->insert(var->name, var);
+		var->level = stm->getCurLevel();
+		//func->cur_address += var->varType->len;
+		var->is_arg = true;
+		var->arg_index = i;
 	}
 
 	IRNode *ir = new IRNode(IRType::func, NULL);
@@ -112,7 +119,7 @@ bool IRCreator::handle_func_def() {
 	}
 	FuncNode *func = stm->getCurFunc();
 	func->isDefinied = true;
-	func->size = func->cur_address + func->max_arg_size + 8;
+	func->size += func->max_arg_size + 8;
 	return true;
 }
 void IRCreator::meetRCB() {

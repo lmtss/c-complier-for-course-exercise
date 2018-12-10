@@ -146,8 +146,8 @@ VarNode* STManager::insert(string& name, int level, TypeNode *type, int line) {
 
 	if (level != 0) {
 		FuncNode *func = getCurFunc();
-		id->stack_address = func->cur_address;
-		func->cur_address += type->len;
+		id->stack_address = func->size;
+		func->size += type->len;
 	}
 
 	curGlobalIndex++;
