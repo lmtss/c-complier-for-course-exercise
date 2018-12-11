@@ -7,6 +7,7 @@ Token error_expect_token;
 #define expect(t) \
 if((error_expect_token = get_token()) != t) \
 {\
+std::cout << "GET " << (int)error_expect_token << std::endl;\
 irc->handle_token_error(cur_line, t);\
 return false;\
 }
@@ -418,7 +419,8 @@ bool Parser::parse_assign_exp() {
 		}
 		else if (ret == Token::comma || ret == Token::semicolon || ret == Token::RB) {// assign_right
 			expect_clear();
-			//std::cout << "ASSR" << std::endl;
+			if(ret == Token::RB)
+				std::cout << "ASSR" << std::endl;
 			HE(parse_additive_exp());
 
 			break;
@@ -477,10 +479,21 @@ bool Parser::parse_multiplicative_exp() {
 	HE(parse_postfix_exp());
 
 	Token t;
-	while ((t = expect_token()) == Token::multiply || t == Token::divide) {
+	/*while ((t = expect_token()) == Token::multiply || t == Token::divide) {
 		get_token();
 		irc->ss_push(val());
 		HE(parse_postfix_exp());
+	}*/
+	while (true) {
+		t = expect_token();
+		if (t == Token::multiply || t == Token::divide) {
+			get_token();
+			irc->ss_push(val());
+			HE(parse_postfix_exp());
+		}
+		else
+			break;
+		
 	}
 
 	HE(irc->handle_multiplicative_exp());
@@ -578,8 +591,11 @@ bool Parser::parse_primary_exp(bool isID) {
 	else {
 		if (expect_token() == Token::LB) {
 			get_token();
+			//std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAA";
 			HE(parse_assign_exp());
+			std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAA";
 			expect(Token::RB);
+			
 		}
 		else {
 			expect_clear();

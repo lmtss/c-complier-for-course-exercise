@@ -1,6 +1,9 @@
 #include "IRCreator.h"
 #include "token.h"
 
+
+int IRNode::index_assign_exp = 0;
+
 IRCreator::IRCreator() : ss_stack(200, NULL), ss_sp_stack(200, NULL) {
 	head = NULL;
 	cur = NULL;
@@ -196,7 +199,7 @@ void IRCreator::print_json() {
 // private
 void IRCreator::addIRNode(IRNode *node) {
 	//std::cout << "IR: ";
-	//node->print();
+	node->print();
 	node->next = NULL;
 	
 

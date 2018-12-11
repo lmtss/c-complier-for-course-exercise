@@ -1,6 +1,15 @@
 #include "RegAllocator.h"
 #include "FrontEnd\SymbolTable.h"
+#include <queue>
+
 #define _get_ir(i) FEI->getIR(i)
+
+struct cmp {
+	bool operator() (TempNode *&a, TempNode *&b) const {
+		return a->live_end > b->live_end;
+	}
+};
+
 RegAllocator::RegAllocator(FrontEndInterface *f) : FEI(f) {
 	for (int i = 0; i < 8; i++) {
 		sregs[i] = NULL;
@@ -100,7 +109,7 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 				}
 
 			}
-			else if (ir->args[i].type == IRAType::temp) {
+			/*else if (ir->args[i].type == IRAType::temp) {
 				TempNode *t = ir->args[i].temp;
 				if (!t->flag_live_scan) {
 					temp_live_range_num++;
@@ -115,16 +124,115 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 						tregs[temp_live_range_num - 1] = t;
 					}
 				}
-			}
+			}*/
 
 		}
 	}
+	temp_lsa(start_index, end_index);
 }
 
 void RegAllocator::sb_linear_scan_alloc(int start_index, int end_index) {
+	for (int i = start_index; i < end_index; i++) {
 
+	}
 }
 
 void RegAllocator::temp_lsa(int start_index, int end_index) {
+	IRNode *ir = NULL;
 
+	std::priority_queue<TempNode *, vector<TempNode *>, cmp> active;
+	std::queue<TempNode *> unhandled;
+	TempNode *current = NULL;
+
+	for (int i = start_index; i < end_index; i++) {
+		ir = FEI->getIR(i);
+		if (ir->type >= IRType::add && ir->type <= IRType::div) {
+			TempNode *temp = NULL;
+			if (ir->args[2].type == IRAType::temp) {
+				temp = ir->args[2].temp;
+				if (temp->live_start == 0) {
+					temp->live_start = i;
+					unhandled.push(temp);
+				}
+					
+			}
+			for (int j = 0; j < 2; j++) {// use
+				if (ir->args[j].type == IRAType::temp) {
+					TempNode *t = ir->args[j].temp;
+					if (t != temp) {
+						if (t->live_end == 0)
+							t->live_end = i;
+					}
+					
+				}
+			}
+		}
+		else if (ir->type == IRType::assign) {
+			TempNode *temp = NULL;
+			if (ir->args[1].type == IRAType::temp) {
+				temp = ir->args[1].temp;
+				if (temp->live_start == 0) {
+					temp->live_start = i;
+					unhandled.push(temp);
+				}
+					
+			}
+			if (ir->args[0].type == IRAType::temp) {
+				temp = ir->args[0].temp;
+				if (temp->live_end == 0)
+					temp->live_end = i;
+			}
+		}
+		else if (ir->type == IRType::func_param_in || ir->type == IRType::print) {
+			if (ir->args[0].type == IRAType::temp) {
+				TempNode *temp = ir->args[0].temp;
+				//temp = ir->args[0].temp;
+				if (temp->live_end == 0)
+					temp->live_end = i;
+			}
+		}
+		
+	}
+
+
+	TempNode *pq_fin = NULL;
+	int cur_reg = 1;
+	while (!unhandled.empty()) {
+		current = unhandled.front();
+		unhandled.pop();
+		if (active.empty()) {
+			current->at_reg = true;
+			current->has_reg = true;
+			current->reg_index = 8;
+			tregs[0] = current;
+			active.push(current);
+			std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+		}
+		else {
+			TempNode *active_top = active.top();
+			if (current->live_start >= active_top->live_end) {
+				active.pop();
+				current->at_reg = true;
+				current->has_reg = true;
+				current->reg_index = active_top->reg_index;
+				active.push(current);
+
+				std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+			}
+			else {
+				if (active_top->reg_index == 15) { // spill
+
+				}
+				else {
+					
+					current->at_reg = true;
+					current->has_reg = true;
+					current->reg_index = active_top->reg_index + cur_reg++;
+					tregs[active_top->reg_index - 7] = current;
+					active.push(current);
+					std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+				}
+			}
+		}
+	}
 }

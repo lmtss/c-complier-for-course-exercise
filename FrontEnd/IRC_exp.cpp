@@ -19,22 +19,34 @@ bool IRCreator::handle_assign_exp() {
 
 	SSNode *assign_right = ss_get(fin_index - 1);
 	IRNode *ir = NULL;
-	for (int i = start_index; i < fin_index - 1; i++) {
-		SSNode *left = ss_get(i);
+	VarNode *id = NULL, *last_id = NULL;
+	SSNode *left = ss_get(fin_index - 2);
+	if (left->type == SSType::identifier) {
+		_handle_var_undecl(last_id, left);
+		ir = new IRNode(IRType::assign, NULL);
+		ir->setArg(1, last_id);
+		_set_arg(ir, 0, assign_right);
+
+		addIRNode(ir);
+	}
+
+	for (int i = fin_index - 3; i >= start_index; i--) {
+		left = ss_get(i);
 
 		if (left->type == SSType::identifier) {
-			VarNode *id = NULL;
+			id = NULL;
 			_handle_var_undecl(id, left);
 			ir = new IRNode(IRType::assign, NULL);
 			ir->setArg(1, id);
-			_set_arg(ir, 0, assign_right);
+			ir->setArg(0, last_id);
+			last_id = id;
 			
 			addIRNode(ir);
 		}
 
 	}
-
-	SSNode *p = new SSNode(assign_right);
+	;
+	SSNode *p = new SSNode(SSType::identifier, 0, last_id->name.c_str());
 
 	for (int i = start_index; i < fin_index; i++)
 		ss_pop();

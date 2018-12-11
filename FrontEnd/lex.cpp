@@ -227,6 +227,7 @@ Token Lex::lex() {
 		if (c == '\n') {
 			yylineno++;
 			if (curState == LexState::d_2) {
+				bufPos = 0;
 				curState = LexState::Start;
 			}
 			continue;
@@ -243,7 +244,10 @@ Token Lex::lex() {
 			else {
 				yytext[bufPos] = c;
 				yytext[bufPos + 1] = '\0';
+
 			}
+			if (res == LexState::char_const)
+				std::cout << yytext << std::endl;
 			
 			//printf("%s\n", yytext);
 

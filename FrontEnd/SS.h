@@ -42,8 +42,11 @@ struct SSNode {
 		}
 		else if (type == SSType::char_const) {
 			if (string_val.length() > 3) {
-				if (string_val[1] == 'n')
+				if (string_val[2] == 'n')
 					char_val = '\n';
+			}
+			else if (string_val.length() == 2) {
+				char_val = ' ';
 			}
 			else {
 				char_val = string_val[1];

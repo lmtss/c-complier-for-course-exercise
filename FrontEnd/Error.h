@@ -94,7 +94,7 @@ struct TokenError : ErrorNode {
 		if(func != NULL)
 			std::cout << "In function \'" << func->name << "\':" << std::endl;
 
-		std::cout << "expect token " << token << std::endl;
+		std::cout << "line: " << line << " expect token " << token << std::endl;
 	}
 	void print_for_json() {
 		if(func != NULL)
@@ -102,7 +102,7 @@ struct TokenError : ErrorNode {
 		else
 			std::cout << "\"func\":\"" << "whole_scope" << "\"," << std::endl;
 		std::cout << "\"line\":" << line << "," << std::endl;
-		std::cout << "\"content\":\"expect token " << token << " redeclared" << "\"" << std::endl;
+		std::cout << "\"content\":\"expect token " << token << " " << "\"" << std::endl;
 	}
 };
 

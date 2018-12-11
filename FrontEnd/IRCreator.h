@@ -40,7 +40,6 @@ struct LabelNode {
 	//static int label_index;
 };
 
-//int LabelNode::label_index = 0;
 
 struct IRArg {
 	int int_imm;
@@ -60,7 +59,10 @@ struct IRArg {
 			std::cout << float_imm;
 			break;
 		case IRAType::char_imm:
-			std::cout << '\'' << char_imm << '\'';
+			if (char_imm != '\n')
+				std::cout << '\'' << char_imm << '\'';
+			else
+				std::cout << "\'\\n\'";
 			break;
 		case IRAType::var:
 			std::cout << id->name;
@@ -95,6 +97,8 @@ struct IRNode {
 	IRArg args[3];
 	IRType type;
 	IRNode *next, *front;
+
+	int index_for_lsa = 0;
 	IRNode() {
 		type = IRType::add;
 		next = NULL;
@@ -373,9 +377,8 @@ struct IRNode {
 		args[i].type = IRAType::char_imm;
 	}
 	//
-
+	static int index_assign_exp;
 };
-
 
 
 class IRCreator {

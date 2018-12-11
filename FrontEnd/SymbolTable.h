@@ -37,22 +37,17 @@ struct TempNode {
 	int reg_index = -1;
 	int stack_address = -1;
 	bool has_reg = false;
-	bool at_reg = true;
+	bool at_reg = false;
 
 	bool flag_live_scan = false;
 
+	int live_start = 0;
+	int live_end = 0;
+
 	TempNode(int i) {
-		index = i;
-		/*if (temp_list.size() <= i) {
-			temp_list.push_back(this);
-		}
-		else {
-			temp_list[i] = this;
-		}*/
-		
+		index = i;	
 	}
 
-	//static vector<TempNode*> temp_list;
 };
 
 struct VarNode : IDNode {
