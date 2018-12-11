@@ -190,6 +190,12 @@ void ASMCreator::handle_t9(int imm) {
 	out << "li" << "$t9" << imm << endl;
 }
 
+void ASMCreator::handle_t9(VarNode *var) {
+	if (alloc->t(9) != NULL)
+		out << "sw" << "$t9" << alloc->t(9)->stack_address << endl;
+	out << "lw" << "$t9" << var_offset(var) << "($fp)" << endl;
+}
+
 int ASMCreator::var_offset(VarNode *var) {
 	if (var->is_arg) {
 		//std::cout << var->reg_index << " AAAAAAAA";
@@ -204,7 +210,7 @@ int ASMCreator::var_offset(TempNode *temp) {
 	return 0;
 }
 
-int ASMCreator::load_store(IRNode *ir, int i) {
+int ASMCreator::load_store(IRNode *ir, int i, bool use_t9 = false) {
 	if (ir->args[i].type == IRAType::var) {
 		VarNode *var = ir->args[i].getVar();
 		if (var->level == 0) {
@@ -217,10 +223,20 @@ int ASMCreator::load_store(IRNode *ir, int i) {
 						out << "sw" << "$s7" << var_offset(old) << "($fp)" << endl;
 					old->at_reg = false;
 				}
-
-				out << "lw" << "$s7" << var->name << endl;
+				if (ir->type == IRType::assign && i == 1 || i == 2 && ir->type >= IRType::add && ir->type <= IRType::div) {
+					alloc->s(var);
+				}
+				else if (use_t9) {
+					handle_t9(var);
+					return 25;
+				}
+				else {
+					out << "lw" << "$s7" << var->name << endl;
+					alloc->s(var);
+				}
+					
 				var->at_reg = true;
-				var->reg_index = 7;
+				var->reg_index = 23;
 			}
 			return 23;
 		}
@@ -234,10 +250,20 @@ int ASMCreator::load_store(IRNode *ir, int i) {
 						out << "sw " << "$s7" << var_offset(old) << "($fp)" << endl;
 					old->at_reg = false;
 				}
+				if (ir->type == IRType::assign && i == 1 || i == 2 && ir->type >= IRType::add && ir->type <= IRType::div) {
+					alloc->s(var);
+				}
+				else if (use_t9) {
+					handle_t9(var);
+					return 25;
+				}
+				else {
+					out << "lw " << "$s7" << var_offset(var) << "($fp)" << endl;
+					alloc->s(var);
+				}
 					
-				out << "lw " << "$s7" << var_offset(var) << "($fp)" << endl;
 				var->at_reg = true;
-				var->reg_index = 7;
+				var->reg_index = 23;
 				return 23;
 			}
 			else {
@@ -257,7 +283,7 @@ int ASMCreator::load_store(IRNode *ir, int i) {
 				
 			out << "lw" << "$t8" << var_offset(temp) << "($fp)" << endl;
 			temp->at_reg = true;
-			temp->reg_index = 8;
+			temp->reg_index = 24;
 			return 24;
 		}
 		else {
@@ -313,15 +339,16 @@ void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 
 				if (imm == 0)
 					out << "sub" << reg_strs[dest_reg] << "$0" << reg_strs[a0_reg] << endl;
 				else {
-					out << "li" << "$v1" << imm << endl;
-					out << "sub" << reg_strs[dest_reg] << "$v1" << reg_strs[a0_reg] << endl;
+					handle_t9(imm);
+					//out << "li" << "$v1" << imm << endl;
+					out << "sub" << reg_strs[dest_reg] << "$t9" << reg_strs[a0_reg] << endl;
 				}
 					
 			}
 		}
 		else {
 			int a0_reg = load_store(ir, 1);
-			int a1_reg = load_store(ir, 0);
+			int a1_reg = load_store(ir, 0, a0_reg == 23);
 			if (ir->type == IRType::add) {
 				out << "add" << reg_strs[dest_reg] << reg_strs[a0_reg] << reg_strs[a1_reg] << endl;
 			}
@@ -377,7 +404,7 @@ void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 
 		}
 		else {
 			int a0_reg = load_store(ir, 1);
-			int a1_reg = load_store(ir, 0);
+			int a1_reg = load_store(ir, 0, a0_reg == 23);
 			if (ir->type == IRType::mult) {
 				out << "mul" << reg_strs[dest_reg] << reg_strs[a0_reg] << reg_strs[a1_reg] << endl;
 			}

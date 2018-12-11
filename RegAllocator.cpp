@@ -99,6 +99,7 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 					var->flag_live_scan = true;
 					if (var_live_range_num > 7) {
 						var->has_reg = false;
+						var->at_reg = false;
 					}
 					else {
 						var->has_reg = true;

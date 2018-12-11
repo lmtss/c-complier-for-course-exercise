@@ -46,6 +46,7 @@ public:
 	void alloc(int start_index, int end_index);
 	VarNode *s(int i) { return sregs[i]; }
 	TempNode *t(int i) { return tregs[i]; }
+	void s(VarNode* var, int i = 7) { sregs[i] = var; }
 private:
 	void discover_live_ranges(int start_index, int end_index);
 	void sb_alloc(int start_index, int end_index);

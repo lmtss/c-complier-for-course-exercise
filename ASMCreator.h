@@ -50,9 +50,10 @@ private:
 	IRNode *creating_call_ir = NULL;
 	FuncNode *creating_def_func = NULL;
 
-	int load_store(IRNode *ir, int i);
+	int load_store(IRNode *ir, int i, bool use_t9);
 	void store(VarNode *var);
 	void handle_t9(int imm);
+	void handle_t9(VarNode *var);
 	int var_offset(VarNode *var);
 	int var_offset(TempNode *temp);
 	FrontEndInterface *FEI;
@@ -65,7 +66,7 @@ private:
 		"beq", "bne", "bge", "ble", "bgt", "blt"
 	};
 	char *reg_strs[32] = {
-		"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "a2", "a3",
+		"$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3",
 		"$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
 		"$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
 		"$t8", "$t9",
