@@ -200,6 +200,10 @@ int ASMCreator::var_offset(VarNode *var) {
 	}
 }
 
+int ASMCreator::var_offset(TempNode *temp) {
+	return 0;
+}
+
 int ASMCreator::load_store(IRNode *ir, int i) {
 	if (ir->args[i].type == IRAType::var) {
 		VarNode *var = ir->args[i].getVar();
@@ -247,11 +251,11 @@ int ASMCreator::load_store(IRNode *ir, int i) {
 		if (!temp->at_reg) {
 			TempNode *old = alloc->t(8);
 			if (old != NULL) {
-				out << "sw" << "$t8" << old->stack_address << "($fp)" << endl;
+				out << "sw" << "$t8" << var_offset(old) << "($fp)" << endl;
 				old->at_reg = false;
 			}
 				
-			out << "lw" << "$t8" << temp->stack_address << "($fp)" << endl;
+			out << "lw" << "$t8" << var_offset(temp) << "($fp)" << endl;
 			temp->at_reg = true;
 			temp->reg_index = 8;
 			return 24;
@@ -293,26 +297,30 @@ void ASMCreator::create_assign(IRNode *ir) {
 	
 }
 
-void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 的形式, !!!!!!!!
-	int dest_reg = load_store(ir, 2), a0_reg = load_store(ir, 1);
-	if (ir->type == IRType::add || ir->type == IRType::sub) {
-		if (ir->args[0].type == IRAType::int_imm) {
-			int imm = ir->args[0].int_imm;
-			
+void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 的形式
+	int dest_reg = load_store(ir, 2); 
+	if (ir->type == IRType::add || ir->type == IRType::sub) {// +- 若有imm, 则一定是 args[1]
+		if (ir->args[1].type == IRAType::int_imm) {
+			int imm = ir->args[1].int_imm;
+			int a0_reg = load_store(ir, 0);
 			if (ir->type == IRType::add) {
-				if(imm == 0)
-					out << "addi" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
+				if (imm == 0)
+					out << "add" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
 				else
 					out << "addi" << reg_strs[dest_reg] << reg_strs[a0_reg] << imm << endl;
 			}
 			else {
 				if (imm == 0)
-					out << "subi" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
-				else
-					out << "subi" << reg_strs[dest_reg] << reg_strs[a0_reg] << imm << endl;
+					out << "sub" << reg_strs[dest_reg] << "$0" << reg_strs[a0_reg] << endl;
+				else {
+					out << "li" << "$v1" << imm << endl;
+					out << "sub" << reg_strs[dest_reg] << "$v1" << reg_strs[a0_reg] << endl;
+				}
+					
 			}
 		}
 		else {
+			int a0_reg = load_store(ir, 1);
 			int a1_reg = load_store(ir, 0);
 			if (ir->type == IRType::add) {
 				out << "add" << reg_strs[dest_reg] << reg_strs[a0_reg] << reg_strs[a1_reg] << endl;
@@ -322,13 +330,14 @@ void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 
 			}
 		}
 	}
-	else {
+	else {// 应该没有0
 		if (ir->args[0].type == IRAType::int_imm) {
 			int imm = ir->args[0].int_imm;
-
+			int a0_reg = load_store(ir, 1);
 			if (imm == 0) {
 				if (ir->type == IRType::mult) {
-					out << "mul" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
+					out << "move" << reg_strs[dest_reg] << "$0" << endl;
+					//out << "mul" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
 				}
 				else {
 					out << "div" << reg_strs[dest_reg] << reg_strs[a0_reg] << "$0" << endl;
@@ -347,7 +356,27 @@ void ASMCreator::create_asmd(IRNode *ir) {// 中间代码保证不会有 a := imm op imm 
 
 			out << "mflo" << reg_strs[dest_reg] << endl;
 		}
+		else if (ir->args[1].type == IRAType::int_imm) {
+			int imm = ir->args[1].int_imm;
+			int a1_reg = load_store(ir, 0);
+			if (imm == 0) {
+				out << "move" << reg_strs[dest_reg] << "$0" << endl;
+			}
+			else {
+				handle_t9(imm);
+
+				if (ir->type == IRType::mult) {
+					out << "mult" << "$t9" << reg_strs[a1_reg] << endl;
+				}
+				else {
+					out << "div" << "$t9" << reg_strs[a1_reg] << endl;
+				}
+			}
+
+			out << "mflo" << reg_strs[dest_reg] << endl;
+		}
 		else {
+			int a0_reg = load_store(ir, 1);
 			int a1_reg = load_store(ir, 0);
 			if (ir->type == IRType::mult) {
 				out << "mul" << reg_strs[dest_reg] << reg_strs[a0_reg] << reg_strs[a1_reg] << endl;

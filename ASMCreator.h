@@ -54,6 +54,7 @@ private:
 	void store(VarNode *var);
 	void handle_t9(int imm);
 	int var_offset(VarNode *var);
+	int var_offset(TempNode *temp);
 	FrontEndInterface *FEI;
 	RegAllocator *alloc;
 	FILE *save_fp = NULL;

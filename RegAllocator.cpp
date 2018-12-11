@@ -120,3 +120,11 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 		}
 	}
 }
+
+void RegAllocator::sb_linear_scan_alloc(int start_index, int end_index) {
+
+}
+
+void RegAllocator::temp_lsa(int start_index, int end_index) {
+
+}

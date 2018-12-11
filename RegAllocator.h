@@ -49,6 +49,8 @@ public:
 private:
 	void discover_live_ranges(int start_index, int end_index);
 	void sb_alloc(int start_index, int end_index);
+	void sb_linear_scan_alloc(int start_index, int end_index);
+	void temp_lsa(int start_index, int end_index);
 
 	AllocGraph *var_graph = NULL, *temp_graph = NULL;
 	int var_live_range_num = 0;
@@ -56,6 +58,6 @@ private:
 	FrontEndInterface *FEI;
 	VarNode *sregs[8];
 	TempNode *tregs[10];
-	//VarNode *s
+	
 };
 
