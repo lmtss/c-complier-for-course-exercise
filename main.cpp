@@ -21,7 +21,7 @@ SSNode *lexVal;
 int yylineno;
 
 int main(int argc, char *argv[]) {
-
+	
 	yytext = new char[100];
 	yytext[0] = '\0';
 
@@ -89,6 +89,7 @@ int main(int argc, char *argv[]) {
 	ac->create_block(0, FEI->ir_list.size());
 
 	if (is_print_to_json) {
+		std::cout << std::endl;
 		std::cout << "}" << std::endl;
 	}
 

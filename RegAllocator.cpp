@@ -161,7 +161,7 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 				if (ir->args[j].type == IRAType::temp) {
 					TempNode *t = ir->args[j].temp;
 					if (t != temp) {
-						if (t->live_end == 0)
+						//if (t->live_end == 0)
 							t->live_end = i;
 					}
 					
@@ -180,16 +180,26 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 			}
 			if (ir->args[0].type == IRAType::temp) {
 				temp = ir->args[0].temp;
-				if (temp->live_end == 0)
+				//if (temp->live_end == 0)
 					temp->live_end = i;
 			}
 		}
-		else if (ir->type == IRType::func_param_in || ir->type == IRType::print) {
+		else if (ir->type == IRType::func_param_in || ir->type == IRType::print || ir->type == IRType::ret) {
 			if (ir->args[0].type == IRAType::temp) {
 				TempNode *temp = ir->args[0].temp;
 				//temp = ir->args[0].temp;
-				if (temp->live_end == 0)
+				//if (temp->live_end == 0)
 					temp->live_end = i;
+			}
+		}
+		else if (ir->type == IRType::func_call) {
+			if (ir->args[1].type == IRAType::temp) {
+				
+				TempNode *temp = ir->args[1].temp;
+				temp->live_start = i;
+				unhandled.push(temp);
+				//if (temp->live_end == 0)
+					temp->live_end = i+1;
 			}
 		}
 		
@@ -207,7 +217,7 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 			current->reg_index = 8;
 			tregs[0] = current;
 			active.push(current);
-			std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+			//std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
 		}
 		else {
 			TempNode *active_top = active.top();
@@ -218,7 +228,7 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 				current->reg_index = active_top->reg_index;
 				active.push(current);
 
-				std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+				//std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
 			}
 			else {
 				if (active_top->reg_index == 15) { // spill
@@ -231,7 +241,7 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 					current->reg_index = active_top->reg_index + cur_reg++;
 					tregs[active_top->reg_index - 7] = current;
 					active.push(current);
-					std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
+					//std::cout << "TREG " << current->index << " " << current->reg_index << " " << current->live_start << " " << current->live_end << std::endl;
 				}
 			}
 		}

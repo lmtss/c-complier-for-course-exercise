@@ -7,7 +7,6 @@ Token error_expect_token;
 #define expect(t) \
 if((error_expect_token = get_token()) != t) \
 {\
-std::cout << "GET " << (int)error_expect_token << std::endl;\
 irc->handle_token_error(cur_line, t);\
 return false;\
 }
@@ -419,8 +418,7 @@ bool Parser::parse_assign_exp() {
 		}
 		else if (ret == Token::comma || ret == Token::semicolon || ret == Token::RB) {// assign_right
 			expect_clear();
-			if(ret == Token::RB)
-				std::cout << "ASSR" << std::endl;
+			
 			HE(parse_additive_exp());
 
 			break;
@@ -593,7 +591,7 @@ bool Parser::parse_primary_exp(bool isID) {
 			get_token();
 			//std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAA";
 			HE(parse_assign_exp());
-			std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAA";
+			//std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAA";
 			expect(Token::RB);
 			
 		}

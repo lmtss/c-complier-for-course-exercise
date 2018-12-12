@@ -144,9 +144,9 @@ void IRCreator::print() {
 	IRNode *printNode = head;
 	while (printNode != NULL) {
 
-		LabelNode *res = label_find(printNode);
-		if (res != NULL) {
-			std::cout << "L" << res->index << ": ";
+		//LabelNode *res = label_find(printNode);
+		if (printNode->label != NULL) {
+			std::cout << "L" << printNode->label->index << ": ";
 		}
 
 		printNode->print();
@@ -166,10 +166,10 @@ void IRCreator::print_json() {
 	while (printNode != NULL) {
 		std::cout << "{" << std::endl;
 		std::cout << "\"hasLabel\":";
-		LabelNode *res = label_find(printNode);
-		if (res != NULL) {
+		//LabelNode *res = label_find(printNode);
+		if (printNode->label != NULL) {
 			std::cout << "true," << std::endl;
-			std::cout << "\"label\":" << res->index << "," << std::endl;
+			std::cout << "\"label\":" << printNode->label->index << "," << std::endl;
 		}
 		else {
 			std::cout << "false," << std::endl;
@@ -199,7 +199,7 @@ void IRCreator::print_json() {
 // private
 void IRCreator::addIRNode(IRNode *node) {
 	//std::cout << "IR: ";
-	node->print();
+	//node->print();
 	node->next = NULL;
 	
 

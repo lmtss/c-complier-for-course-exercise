@@ -97,7 +97,8 @@ struct IRNode {
 	IRArg args[3];
 	IRType type;
 	IRNode *next, *front;
-
+	LabelNode *label = NULL;
+	
 	int index_for_lsa = 0;
 	IRNode() {
 		type = IRType::add;
@@ -596,6 +597,7 @@ private:
 		if (it == label_map.end()) {
 			label_map[target] = label;
 			label->index = label_index++;
+			target->label = label;
 		}
 		else {
 			LabelNode *same_label = it->second;

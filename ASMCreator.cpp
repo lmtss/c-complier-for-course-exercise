@@ -131,8 +131,8 @@ void ASMCreator::create_head() {
 void ASMCreator::create_block(int start, int end) {
 	for (int i = start; i < end; i++) {
 		IRNode *ir = FEI->getIR(i);
-		LabelNode *label = NULL;
-		label = FEI->getLabel(ir);
+		LabelNode *label = ir->label;
+		//label = FEI->getLabel(ir);
 		
 		if (creating_call_ir != NULL) {
 			if (ir->type != IRType::func_param_in) {
