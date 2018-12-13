@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 enum ErrorType {
-	undeclared, redeclared, param_num, no_ret, token
+	undeclared, redeclared, param_num, no_ret, token, decl_void
 };
 
 struct ErrorNode {
@@ -44,11 +44,17 @@ struct RedeclaredError : ErrorNode {
 		varName = s;
 	}
 	void print() {
-		std::cout << "In function \'" << func->name << "\':" << std::endl;
+		if(func != NULL)
+			std::cout << "In function \'" << func->name << "\':" << std::endl;
+		else
+			std::cout << "In global " << ":" << std::endl;
 		std::cout << "line " << line << " error: \'" << varName << "\' redeclared" << std::endl;
 	}
 	void print_for_json() {
-		std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		if (func != NULL)
+			std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		else
+			std::cout << "\"func\":\"" << "global" << "\"," << std::endl;
 		std::cout << "\"line\":" << line << "," << std::endl;
 		std::cout << "\"content\":\"" << varName << " redeclared" << "\"" << std::endl;
 	}
@@ -103,6 +109,27 @@ struct TokenError : ErrorNode {
 			std::cout << "\"func\":\"" << "whole_scope" << "\"," << std::endl;
 		std::cout << "\"line\":" << line << "," << std::endl;
 		std::cout << "\"content\":\"expect token " << token << " " << "\"" << std::endl;
+	}
+};
+
+struct DeclVoidError : ErrorNode {
+	string varName;
+	DeclVoidError(FuncNode *f, int l, string &s) : ErrorNode(f, l, ErrorType::token), varName(s) {
+		
+	}
+	void print() {
+		if (func != NULL)
+			std::cout << "In function \'" << func->name << "\':" << std::endl;
+
+		std::cout << "line: " << line << " var " << varName << " declared void" << std::endl;
+	}
+	void print_for_json() {
+		if (func != NULL)
+			std::cout << "\"func\":\"" << func->name << "\"," << std::endl;
+		else
+			std::cout << "\"func\":\"" << "global" << "\"," << std::endl;
+		std::cout << "\"line\":" << line << "," << std::endl;
+		std::cout << "\"content\":\"var \'" << varName  << " declared void \"" << std::endl;
 	}
 };
 

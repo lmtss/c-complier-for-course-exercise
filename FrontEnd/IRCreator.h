@@ -100,6 +100,7 @@ struct IRNode {
 	LabelNode *label = NULL;
 	
 	int index_for_lsa = 0;
+	SymbolTable *scope = NULL;
 	IRNode() {
 		type = IRType::add;
 		next = NULL;
@@ -535,8 +536,12 @@ public:
 		return head;
 	}
 
+	void adjust();
+
 private:
 	IRNode *head, *cur;
+	IRNode *gi_head = NULL, *gi_cur = NULL;
+	int gi_num = 0;
 
 	STManager *stm;
 	ErrorManager *em;
@@ -555,6 +560,8 @@ private:
 	bool is_void_func = false;
 
 	void addIRNode(IRNode *node);
+	void addGlobalInit(IRNode *ir);
+
 	void delete_ir_node(IRNode *node) {
 		IRNode *fro = node->front, *next = node->next;
 		if (fro != NULL) {

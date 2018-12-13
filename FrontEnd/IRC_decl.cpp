@@ -1,3 +1,4 @@
+
 #include "IRCreator.h"
 #include "SymbolTable.h"
 
@@ -16,6 +17,13 @@ bool IRCreator::handle_init_declarator() {
 		VarNode *find_res = stm->findCurTable(id->string_val), *insert_res = NULL;
 		if (find_res != NULL) {
 			// already decl
+			RedeclaredError *e = new RedeclaredError(stm->getCurFunc(), id->code_line, id->string_val);
+			em->addEN(e);
+			return false;
+		}
+		else if (type == stm->getBasicType(2)) {
+			DeclVoidError *e = new DeclVoidError(stm->getCurFunc(), id->code_line, id->string_val);
+			em->addEN(e);
 			return false;
 		}
 		else {
@@ -27,7 +35,10 @@ bool IRCreator::handle_init_declarator() {
 			ir = new IRNode(IRType::assign, NULL);
 			ir->setArg(1, insert_res);
 			_set_arg(ir, 0, initializer);
-			addIRNode(ir);
+			if (stm->getCurLevel() == 0)
+				addGlobalInit(ir);
+			else
+				addIRNode(ir);
 		}
 	}
 	else if (id->type == SSType::func_decl) {

@@ -18,8 +18,10 @@ enum SymbolType {
 };
 
 struct TypeNode {
+	
 	string name;
 	int len;
+	int index;
 };
 
 struct IDNode {
@@ -79,6 +81,7 @@ struct FuncNode : IDNode {
 	//int cur_address = 0;
 	int size = 0;
 	int max_arg_size = 0;
+	int var_num = 0;
 };
 
 class SymbolTable {
@@ -93,6 +96,14 @@ public:
 		while (it != table.end()) {
 			func(it->second);
 			it++;
+		}
+	}
+	void back_traverse(function<void(VarNode*)> func) {
+		traverse(func);
+		SymbolTable *scope = father;
+		while (father->father != NULL) {
+			father->traverse(func);
+			father = father->father;
 		}
 	}
 
@@ -131,6 +142,7 @@ public:
 	BlockType getCurBlockType() { return curTable->type; }
 	FuncNode *getCurFunc() { return curFunc; }
 	SymbolTable *getWholeTable() { return wholeTable; }
+	SymbolTable *getCurTable() { return curTable; }
 
 	vector<TempNode*> temp_list;
 private:
@@ -145,7 +157,7 @@ private:
 	map<string, FuncNode*> funcTable;
 
 	TypeNode bTypes[4] = {
-		{"int", 4},{ "float", 0 },{ "void", 0 },{ "", 0 }
+		{"int", 4, 0},{ "float", 0, 1},{ "void", 0 , 2},{ "", 0 , 3}
 	};
 
 };

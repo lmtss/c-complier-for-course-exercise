@@ -88,6 +88,11 @@ void RegAllocator::sb_alloc(int start_index, int end_index) {
 			if (ir->args[i].type == IRAType::var) {
 				VarNode *var = ir->args[i].getVar();
 				var->is_useless = false;
+				if (var->level == 0) {
+					var->at_reg = false;
+					var->has_reg = false;
+					continue;
+				}
 				if (var->is_arg && var->arg_index < 4) {
 					var->reg_index = var->arg_index + 4;
 					//std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA " << var->name << std::endl;

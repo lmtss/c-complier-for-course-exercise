@@ -50,12 +50,15 @@ private:
 	IRNode *creating_call_ir = NULL;
 	FuncNode *creating_def_func = NULL;
 
+	int cur_ir_index = 0;
+
 	int load_store(IRNode *ir, int i, bool use_t9);
 	void store(VarNode *var);
 	void handle_t9(int imm);
 	void handle_t9(VarNode *var);
 	int var_offset(VarNode *var);
 	int var_offset(TempNode *temp);
+
 	FrontEndInterface *FEI;
 	RegAllocator *alloc;
 	FILE *save_fp = NULL;

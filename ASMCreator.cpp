@@ -102,6 +102,7 @@ void ASMCreator::create_head() {
 	/**/
 
 	int ir_num = FEI->ir_num;
+	int fi = 0;
 	for (int i = 0; i < ir_num; i++) {
 		IRNode *ir = FEI->getIR(i);
 		if (ir->type == IRType::assign) {
@@ -110,9 +111,11 @@ void ASMCreator::create_head() {
 			out << n->name + ": " + ".word " << ir->args[0].int_imm << endl;
 		}
 		else {
+			fi = i;
 			break;
 		}
 	}
+	
 
 	whole_table->traverse([&](VarNode *n) {
 		if (!n->flag_global_scan) {
@@ -126,10 +129,13 @@ void ASMCreator::create_head() {
 
 	out << ".text" << endl;
 	out << ".globl main" << endl;
+	alloc->alloc(fi, ir_num);
+	create_block(fi, ir_num);
 }
 
 void ASMCreator::create_block(int start, int end) {
 	for (int i = start; i < end; i++) {
+		cur_ir_index = i;
 		IRNode *ir = FEI->getIR(i);
 		LabelNode *label = ir->label;
 		//label = FEI->getLabel(ir);
@@ -214,7 +220,9 @@ int ASMCreator::load_store(IRNode *ir, int i, bool use_t9 = false) {
 	if (ir->args[i].type == IRAType::var) {
 		VarNode *var = ir->args[i].getVar();
 		if (var->level == 0) {
+			
 			if (!var->at_reg) {
+				
 				VarNode *old = alloc->s(7);
 				if (old != NULL) {
 					if(old->level == 0)
@@ -223,14 +231,16 @@ int ASMCreator::load_store(IRNode *ir, int i, bool use_t9 = false) {
 						out << "sw" << "$s7" << var_offset(old) << "($fp)" << endl;
 					old->at_reg = false;
 				}
-				if (ir->type == IRType::assign && i == 1 || i == 2 && ir->type >= IRType::add && ir->type <= IRType::div) {
-					alloc->s(var);
+				if ((ir->type == IRType::assign && i == 1) || (i == 2 && ir->type >= IRType::add && ir->type <= IRType::div)) {
+					//std::cout << "SSSSSSSSSSS" << cur_ir_index << std::endl;
+					alloc->s(var); 
 				}
 				else if (use_t9) {
 					handle_t9(var);
 					return 25;
 				}
 				else {
+					
 					out << "lw" << "$s7" << var->name << endl;
 					alloc->s(var);
 				}
@@ -435,7 +445,9 @@ void ASMCreator::create_print(IRNode *ir) {
 				out << "move $a0, " << reg_strs[var->reg_index] << endl;
 			}
 			else {
-
+				int r = load_store(ir, 0);
+				out << "li $v0, 1" << endl;
+				out << "move $a0, " << reg_strs[r] << endl;
 			}
 		}
 		else if (type == IRAType::temp) {
@@ -451,13 +463,13 @@ void ASMCreator::create_print(IRNode *ir) {
 			if (imm == 0)
 				out << "li $a0, $0" << endl;
 			else
-				out << "li $a0, " << imm << endl;
+				out << "li" << "$a0" << imm << endl;
 		}
 		else if (type == IRAType::char_imm) {
 			out << "li $v0, 11" << endl;
 			char c = ir->args[0].char_imm;
 
-			out << "li $a0, " << (int)c << endl;
+			out << "li" << "$a0" << (int)c << endl;
 		}
 		out << "syscall" << endl;
 		if(creating_def_func->param_num > 0)
@@ -523,17 +535,24 @@ void ASMCreator::create_call(IRNode *ir) {
 	//
 	creating_call_ir = ir;
 	//
+	SymbolTable *table = ir->scope;
+	table->back_traverse([&](VarNode *n) {
+		if (n->at_reg && !n->is_useless) {
+			out << "sw" << reg_strs[n->reg_index] << var_offset(n) << "($fp)" << endl;
+		}
+	});
+
 	// save s7
 	VarNode *s7 = alloc->s(7);
 	if (s7 != NULL)
 		store(s7);
 	// save a
-	for (int i = 0; i < creating_def_func->param_num; i++) {
+	/*for (int i = 0; i < creating_def_func->param_num; i++) {
 		VarNode *a = creating_def_func->paraList[i];
 		if (a->at_reg && !a->is_useless) {
 			out << "sw" << reg_strs[a->reg_index] << var_offset(a) << "($fp)" << endl;
 		}
-	}
+	}*/
 }
 
 void ASMCreator::create_call_fin() {
@@ -543,11 +562,23 @@ void ASMCreator::create_call_fin() {
 	//
 	out << "jal" << func->name << endl;
 	out << "nop" << endl;
-	if (func->retType->name[0] != 'v') {
+	if (func->retType->index != 2) {
 		//std::cout << "SSSSSSSSSss";
 		TempNode *temp = creating_call_ir->args[1].temp;
 		out << "move" << reg_strs[temp->reg_index] << "$v0" << endl;
 	}
+	/*for (int i = 0; i < creating_def_func->param_num; i++) {
+		VarNode *a = creating_def_func->paraList[i];
+		if (a->at_reg && !a->is_useless) {
+			out << "lw" << reg_strs[a->reg_index] << var_offset(a) << "($fp)" << endl;
+		}
+	}*/
+	SymbolTable *table = creating_call_ir->scope;
+	table->back_traverse([&](VarNode *n) {
+		if (n->at_reg && !n->is_useless) {
+			out << "lw" << reg_strs[n->reg_index] << var_offset(n) << "($fp)" << endl;
+		}
+	});
 	creating_call_ir = NULL;
 	now_a_reg_index = 0;
 }
@@ -575,7 +606,10 @@ void ASMCreator::create_param_in(IRNode *ir) {// !!!!!!!!!!!!!
 void ASMCreator::create_return(IRNode *ir) {
 	FuncNode *func = creating_def_func;
 	
-	if (ir->args[0].type == IRAType::int_imm) {
+	if (func->retType->index == 2) {// void
+
+	}
+	else if (ir->args[0].type == IRAType::int_imm) {
 		int imm = ir->args[0].int_imm;
 		if (imm == 0)
 			out << "move" << "$v0" << "$0" << endl;

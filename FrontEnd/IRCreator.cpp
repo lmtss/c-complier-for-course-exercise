@@ -108,7 +108,7 @@ bool IRCreator::handle_func_def() {
 	//std::cout << "adasdas " << ss_len() - sp_top();
 	for (int i = sp_top(); i < ss_len() + 1; i++)
 		ss_pop();
-	if (!has_return && !is_void_func) {
+	if (!has_return) {
 		if (is_void_func) {
 			IRNode *ir = new IRNode(IRType::ret, NULL);
 			addIRNode(ir);
@@ -202,7 +202,9 @@ void IRCreator::addIRNode(IRNode *node) {
 	//node->print();
 	node->next = NULL;
 	
-
+	node->scope = stm->getCurTable();
+	node->print();
+	std::cout << node->scope << std::endl;
 	if (!expect_for_exp_3) {
 		ir_num++;
 		if (head == NULL) {
@@ -236,10 +238,15 @@ void IRCreator::addIRNode(IRNode *node) {
 			is_parse_else = false;
 		}
 
-		if (is_parse_if_end) {
-
-			_expect_end_label->target = node;
-			label_finish(_expect_end_label);
+		if (is_parse_if_end ) {
+			if (node->type != IRType::func) {
+				_expect_end_label->target = node;
+				label_finish(_expect_end_label);
+			}
+			else {
+				_expect_end_label->target = NULL;
+			}
+			
 			_expect_end_label = NULL;
 			is_parse_if_end = false;
 		}
@@ -263,6 +270,54 @@ void IRCreator::addIRNode(IRNode *node) {
 		}
 	}
 
+}
+
+void IRCreator::addGlobalInit(IRNode *ir) {
+	ir->next = NULL;
+	if (gi_head == NULL) {
+		gi_head = ir;
+		gi_cur = gi_head;
+	}
+	else {
+		gi_cur->next = ir;
+		ir->front = gi_cur;
+		gi_cur = ir;
+	}
+	gi_num++;
+}
+
+void IRCreator::adjust() {
+	ir_num = 0;
+	IRNode *ir = head;
+	// gloabl var init
+	if (gi_num != 0) {
+		IRNode *h = head;
+		head = gi_head;
+		gi_cur->next = h;
+		h->front = gi_cur;
+
+		ir_num += gi_num;
+	}
+	
+	// useless jump
+	
+	while (ir != NULL) {
+		if (ir->type == IRType::jump && ir->args[0].label->target == NULL && ir->label == NULL) {
+			IRNode *fro = ir->front;
+			fro->next = ir->next;
+			if (ir->next != NULL) {
+				ir->next->front = fro;
+			}
+			else
+				break;
+				
+			fro = ir;
+			ir = ir->next;
+			delete fro;
+		}
+		ir_num++;
+		ir = ir->next;
+	}
 }
 
 bool IRCreator::handle_return_state() {
@@ -440,8 +495,6 @@ bool IRCreator::handle_rel_exp(Token op) {
 
 bool IRCreator::handle_func_call() {
 	int start_index = sp_top(), fin_index = ss_len();
-	
-	
 
 	FuncNode *func = stm->findFunc(ss_get(start_index)->string_val);
 

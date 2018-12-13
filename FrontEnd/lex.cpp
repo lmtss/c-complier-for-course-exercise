@@ -246,8 +246,6 @@ Token Lex::lex() {
 				yytext[bufPos + 1] = '\0';
 
 			}
-			if (res == LexState::char_const)
-				std::cout << yytext << std::endl;
 			
 			//printf("%s\n", yytext);
 

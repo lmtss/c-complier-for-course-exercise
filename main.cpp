@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
 	parser->set(scopePredictor, irCreator);
 
 	parser->parse();
+	irCreator->adjust();
 
 	if (is_print_to_json) {
 		std::cout << "{" << std::endl;
@@ -84,9 +85,9 @@ int main(int argc, char *argv[]) {
 	ASMCreator *ac = new ASMCreator(FEI, alloc, out, false);
 	ac->create_head();
 
-	alloc->alloc(0, FEI->ir_list.size());
+	//alloc->alloc(1, FEI->ir_list.size());
 	
-	ac->create_block(0, FEI->ir_list.size());
+	//ac->create_block(1, FEI->ir_list.size());
 
 	if (is_print_to_json) {
 		std::cout << std::endl;

@@ -16,10 +16,11 @@ return false;\
 void Parser::parse_translation_unit() {
 	bool meetLCB = false, meetAssign = false, fin = false;
 	int n = 0;
-	while (!fin && n < 3) {
+	while (!fin) {
 		n++;
 		while (true) {
 			Token ret = expect_token();
+			std::cout << (int)ret << " ";
 			if (ret >= Token::error) {
 				fin = true;
 				break;
@@ -41,6 +42,7 @@ void Parser::parse_translation_unit() {
 		}
 		meetAssign = meetLCB = false;
 	}
+	std::cout << (int)get_token();
 }
 
 bool Parser::parse_func_def() {
@@ -172,6 +174,9 @@ bool Parser::parse_type_spec() {
 		
 	}
 	else if(ret == Token::float_k){
+		get_token();
+	}
+	else if (ret == Token::void_k) {
 		get_token();
 	}
 	else {

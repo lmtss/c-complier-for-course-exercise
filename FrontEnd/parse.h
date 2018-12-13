@@ -9,20 +9,20 @@ extern SSNode *lexVal;
 
 struct TokenPool {
 	int head, end, expect;
-	Token tokens[100];
-	SSNode *astNodes[100];
+	Token tokens[200];
+	SSNode *astNodes[200];
 	TokenPool() {
 		head = end = expect = 0;
 		for (int i = 0; i < 100; i++)
-			astNodes[100] = NULL;
+			astNodes[200] = NULL;
 	}
 	void push(Token t, SSNode *node) {
 		tokens[end] = t;
 		astNodes[end] = node;
-		end = (end + 1) % 99;
+		end = (end + 1) % 199;
 	}
 	void pop() {
-		head = (head + 1) % 99;
+		head = (head + 1) % 199;
 		expect = head;
 	}
 	Token front() {
@@ -66,7 +66,12 @@ private:
 	// 
 	Token expect_token();
 	void expect_clear() {_token_pool.clear();}
-
+	bool is_val_token(Token ret) {
+		return ret >= Token::multiply && ret <= Token::substract
+			|| ret >= Token::int_const && ret <= Token::char_const
+			|| ret >= Token::int_k && ret <= Token::void_k
+			|| ret == Token::identifier;
+	}
 	SSNode *val() { return lex_val; }
 	//
 	//void expect(Token t);

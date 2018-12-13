@@ -139,7 +139,7 @@ VarNode* STManager::insert(string& name, int level, TypeNode *type, int line) {
 	VarNode* id = new VarNode;
 	id->name = name;
 	id->varType = type;
-	id->level = level;
+	id->level = getCurLevel();
 	id->declPosLine = line;
 
 	curTable->insert(name, id);
@@ -148,6 +148,8 @@ VarNode* STManager::insert(string& name, int level, TypeNode *type, int line) {
 		FuncNode *func = getCurFunc();
 		id->stack_address = func->size;
 		func->size += type->len;
+
+		func->var_num++;
 	}
 
 	curGlobalIndex++;

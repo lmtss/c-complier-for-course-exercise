@@ -17,6 +17,8 @@ Token Parser::get_token() {
 	if (_token_pool.empty()) {
 		ret = lex();
 		lex_val = lexVal;
+		if(is_val_token(ret))
+			cur_line = lex_val->code_line;
 		if (ret == Token::END) {
 
 		}
@@ -27,7 +29,7 @@ Token Parser::get_token() {
 	else {
 		ret = _token_pool.front();
 		lex_val = _token_pool.val();
-		if (lex_val != NULL)
+		if (is_val_token(ret))
 			cur_line = lex_val->code_line;
 		_token_pool.pop();
 	}
