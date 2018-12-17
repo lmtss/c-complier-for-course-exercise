@@ -35,6 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ASMCreator.h" />
+    <ClInclude Include="..\DAG.h" />
     <ClInclude Include="..\FrontEndInterface.h" />
     <ClInclude Include="..\FrontEnd\Error.h" />
     <ClInclude Include="..\FrontEnd\IRCreator.h" />

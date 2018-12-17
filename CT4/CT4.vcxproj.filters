@@ -89,5 +89,8 @@
     <ClInclude Include="..\RegAllocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\DAG.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

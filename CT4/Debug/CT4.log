@@ -1,9 +1,15 @@
-﻿  ASMCreator.cpp
-d:\complier\test4\ct4\asmcreator.cpp(148): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
-d:\complier\test4\ct4\asmcreator.cpp(484): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
-d:\complier\test4\ct4\asmcreator.cpp(515): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1769): note: see declaration of 'sprintf'
+﻿  main.cpp
+d:\complier\test4\ct4\dag.h(53): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\dag.h(83): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\dag.h(404): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\dag.h(411): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\dag.h(430): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\dag.h(452): warning C4018: '<': signed/unsigned mismatch
+d:\complier\test4\ct4\main.cpp(35): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+d:\complier\test4\ct4\main.cpp(47): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+  FrontEndInterface.cpp
+  Generating Code...
   CT4.vcxproj -> D:\Complier\TEST4\CT4\Debug\CT4.exe
   CT4.vcxproj -> D:\Complier\TEST4\CT4\Debug\CT4.pdb (Full PDB)
