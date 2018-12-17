@@ -49,7 +49,7 @@ decl-param = type-spec id
 ```
 #### 陈述
 ```
-state = compound-state | return-state | if-state | while-state | for-state | exp-state
+state = compound-state | return-state | if-state | while-state | for-state | exp-state | print-state | in-state
 
 compound-state = { {{state}|{decl}}* }
 
@@ -62,6 +62,8 @@ while-state = "while" ( logic-or-exp ) state
 for-state = "for" ( {assign-exp}? ; logic-or-exp ; {assign-exp}? ) state
 
 return-state = "return" assign-exp ;
+
+print-state = "print" call_arg_list;
 ```
 #### 表达式
 ```
@@ -121,7 +123,9 @@ enum class IRType {
 	equal_jump, unequal_jump, 
 	ge_jump, le_jump, // >= <=
 	greater_jump, less_jump, 
-	jump
+	jump,
+	print, input, // 输出，输入
+	null
 };
 struct IRNode {
 	IRArg args[3]; 
@@ -137,6 +141,8 @@ if {a} [op] {b} jmp {label}
 jmp {label} //无条件跳转
 call {func_name} {ret}? //函数调用，若函数返回值为void，则不需要ret
 param_in {a} //函数传参
+print {a}
+in {a}
 ```
 ## 前端api (大概
 ```cpp
