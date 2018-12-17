@@ -203,8 +203,8 @@ void IRCreator::addIRNode(IRNode *node) {
 	node->next = NULL;
 	
 	node->scope = stm->getCurTable();
-	node->print();
-	std::cout << node->scope << std::endl;
+	//node->print();
+	//std::cout << node->scope << std::endl;
 	if (!expect_for_exp_3) {
 		ir_num++;
 		if (head == NULL) {
@@ -602,6 +602,23 @@ bool IRCreator::handle_print_state() {
 		IRNode *ir = new IRNode(IRType::print, NULL);
 		SSNode *node = ss_get(i);
 		_set_arg(ir, 0, node)
+		addIRNode(ir);
+	}
+	for (int i = start_index; i < fin_index; i++) {
+		ss_pop();
+	}
+	return true;
+}
+
+bool IRCreator::handle_in_state() {
+	int start_index = sp_top(), fin_index = ss_len();
+	for (int i = start_index; i < fin_index; i++) {
+		IRNode *ir = new IRNode(IRType::input, NULL);
+		SSNode *node = ss_get(i);
+		if (node->type != SSType::identifier) {
+			return false;
+		}
+		_set_arg(ir, 0, node);
 		addIRNode(ir);
 	}
 	for (int i = start_index; i < fin_index; i++) {

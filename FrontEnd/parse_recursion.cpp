@@ -20,7 +20,7 @@ void Parser::parse_translation_unit() {
 		n++;
 		while (true) {
 			Token ret = expect_token();
-			std::cout << (int)ret << " ";
+			//std::cout << (int)ret << " ";
 			if (ret >= Token::error) {
 				fin = true;
 				break;
@@ -42,7 +42,7 @@ void Parser::parse_translation_unit() {
 		}
 		meetAssign = meetLCB = false;
 	}
-	std::cout << (int)get_token();
+	//std::cout << (int)get_token();
 }
 
 bool Parser::parse_func_def() {
@@ -77,8 +77,9 @@ bool Parser::parse_decl() {
 
 	irc->new_sp();
 
-	HE(parse_type_spec());
+	HE(parse_type_spec()); 
 	HE(parse_init_declarator_list());
+	
 	expect(Token::semicolon);
 	irc->handle_decl();
 	irc->pop_sp();
@@ -89,7 +90,7 @@ bool Parser::parse_decl() {
 bool Parser::parse_init_declarator_list() {
 
 	irc->new_sp();
-
+	
 	HE(parse_init_declarator()); 
 	while (expect_token() == Token::comma) {
 		get_token();
@@ -105,10 +106,10 @@ bool Parser::parse_init_declarator() {
 
 	irc->new_sp();
 
-	HE(parse_declarator());
+	HE(parse_declarator()); 
 	if (expect_token() == Token::assign) {
 
-		get_token();
+		get_token(); 
 		HE(parse_initializer());
 	}
 	else {
@@ -295,6 +296,11 @@ bool Parser::parse_state() {
 		get_token();
 		HE(parse_print_state());
 	}
+	else if (t == Token::in_k) {
+		get_token();
+		//std::cout << "fff ";
+		HE(parse_in_state());
+	}
 	else {
 		expect_clear();
 		HE(parse_exp_state());
@@ -362,6 +368,14 @@ bool Parser::parse_print_state() {
 	irc->new_sp();
 	HE(parse_call_arg_list());
 	irc->handle_print_state();
+	irc->pop_sp();
+	return true;
+}
+
+bool Parser::parse_in_state() {
+	irc->new_sp();
+	HE(parse_call_arg_list());
+	HE(irc->handle_in_state());
 	irc->pop_sp();
 	return true;
 }

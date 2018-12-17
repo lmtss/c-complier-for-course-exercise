@@ -21,7 +21,7 @@ enum class IRAType {
 enum class IRType {
 	add, sub, mult, div, assign, ret, func, func_call, func_param_in,
 	equal_jump, unequal_jump, ge_jump, le_jump, greater_jump, less_jump, jump,
-	print
+	print, null, input
 };
 
 struct IRNode;
@@ -83,6 +83,47 @@ struct IRArg {
 	}
 	VarNode *getVar() { return (VarNode *)id; }
 	FuncNode *getFuc() { return (FuncNode *)id; }
+	bool operator == (const IRArg & b) const {
+		if (type == b.type) {
+			switch (type) {
+			case IRAType::int_imm:
+				return int_imm == b.int_imm;
+				break;
+			case IRAType::var:
+				return id == b.id;
+				break;
+			case IRAType::temp:
+				return temp == b.temp;
+				break;
+			default:
+				return false;
+				break;
+			}
+		}
+		return false;
+	}
+
+	bool operator < (const IRArg & b) const {
+		if (type == b.type) {
+			switch (type) {
+			case IRAType::int_imm:
+				return int_imm < b.int_imm;
+				break;
+			case IRAType::var:
+				return id < b.id;
+				break;
+			case IRAType::temp:
+				return temp < b.temp;
+				break;
+			default:
+				return false;
+				break;
+			}
+		}
+		else {
+			return type < b.type;
+		}
+	}
 };
 
 struct TempType {
@@ -225,6 +266,10 @@ struct IRNode {
 			std::cout << "print ";
 			args[0].print();
 			break;
+		case IRType::input:
+			std::cout << "in ";
+			args[0].print();
+			break;
 		default:
 			break;
 		}
@@ -333,6 +378,10 @@ struct IRNode {
 			break;
 		case IRType::print:
 			std::cout << "print ";
+			args[0].print();
+			break;
+		case IRType::input:
+			std::cout << "in ";
 			args[0].print();
 			break;
 		default:
@@ -482,6 +531,7 @@ public:
 	//
 	bool handle_return_state();
 	bool handle_print_state();
+	bool handle_in_state();
 	bool handle_state();
 	// logic
 	bool handle_logic_exp();

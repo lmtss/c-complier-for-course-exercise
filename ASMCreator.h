@@ -17,6 +17,10 @@ public:
 	friend ASMOut& operator<< (ASMOut &out, int imm);
 	friend ASMOut& operator<< (ASMOut &out, std::string &s);
 	friend void operator<< (ASMOut &out, basic_ostream<char, char_traits<char>>& (*_Pfn)(basic_ostream<char, char_traits<char>>&));
+	void fin() {
+		if (is_print_json)
+			std::cout << "]" << std::endl;
+	}
 	bool ir_end = false;
 private:
 	fstream &fout;
@@ -24,6 +28,7 @@ private:
 	int index = 0;
 	ASMOS state;
 	bool ls = false;
+	bool is_frist_asm = true;
 };
 
 
@@ -39,6 +44,7 @@ private:
 	void create_assign(IRNode *ir);
 	void create_asmd(IRNode *ir);
 	void create_print(IRNode *ir);
+	void create_input(IRNode *ir);
 	void create_jump(IRNode *ir);
 	
 	void create_param_in(IRNode *ir);

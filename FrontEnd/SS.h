@@ -4,7 +4,7 @@ enum class SSType {
 	int_const = 0, float_const, char_const, bool_const,
 	identifier, func_call, func_decl, array_left, array_right,
 	add, sub, mult, div, mod,
-	int_k = 50, float_k, void_k, else_k,
+	int_k = 50, float_k, void_k, else_k, 
 	temp_var, ir, label
 };
 

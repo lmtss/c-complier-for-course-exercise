@@ -18,22 +18,33 @@ ASMOut& operator<< (ASMOut &out, char *s) {
 		out.fout << s << " ";
 
 		if (out.is_print_json) {
-			std::cout << "{" << std::endl;
-			std::cout << "\"head\":\"" << s << "\"" << std::endl;
+			if (out.is_frist_asm) {
+				std::cout << "{";
+				out.is_frist_asm = false;
+			}
+			else
+				std::cout << ",{";
+			std::cout << "\"op\":\"" << s << "\"";
 		}
 	}
 	else if (out.state == ASMOS::first) {
 		out.state = ASMOS::sec;
 		out.fout << s;
+		if (out.is_print_json) {
+			std::cout << ",\"arg\":[\"" << s << "\"";
+		}
 	}
 	else if (out.state == ASMOS::imm && out.ls) {
 		out.fout << s;
+		if (out.is_print_json) {
+			std::cout << s << "\"";
+		}
 	}
 	else {
 		out.fout << ", " << s;
-	}
-	if (out.is_print_json) {
-
+		if (out.is_print_json) {
+			std::cout << ",\"" << s << "\"";
+		}
 	}
 
 	return out;
@@ -42,7 +53,12 @@ ASMOut& operator<< (ASMOut &out, int imm) {
 	out.state = ASMOS::imm;
 	out.fout << ", " << imm;
 	if (out.is_print_json) {
-		
+		if (out.ls) {
+			std::cout << ",\"" << imm;
+		}
+		else {
+			std::cout << "," << imm;
+		}
 	}
 	return out;
 }
@@ -51,34 +67,49 @@ ASMOut& operator<< (ASMOut &out, std::string &s) {
 	if (out.state == ASMOS::start) {
 		out.state = ASMOS::first;
 		out.fout << s << " ";
+		if (out.is_print_json) {
+			if (out.is_frist_asm) {
+				std::cout << "{";
+				out.is_frist_asm = false;
+			}
+			else
+				std::cout << ",{";
+			std::cout << "\"op\":\"" << s << "\"";
+		}
 	}
 	else if (out.state == ASMOS::first) {
 		out.state = ASMOS::sec;
 		out.fout << s;
+		if (out.is_print_json) {
+			std::cout << ",\"arg\":[\"" << s << "\"";
+		}
 	}
 	else if (out.state == ASMOS::imm && out.ls) {
 		out.fout << s;
+		if (out.is_print_json) {
+			std::cout << s << "\"";
+		}
 	}
 	else {
 		out.fout << ", " << s;
+		if (out.is_print_json) {
+			std::cout << ",\"" << s << "\"";
+		}
 	}
-	if (out.is_print_json) {
-		
 
-	}
 	return out;
 }
 
 void operator<< (ASMOut &out, basic_ostream<char, char_traits<char>>& (*_Pfn)(basic_ostream<char, char_traits<char>>&)) {
-	out.state = ASMOS::start;
+	
 	out.ls = false;
 	out.fout << endl;
 	if (out.is_print_json) {
-		if(out.ir_end)
-			std::cout << "}" << std::endl;
-		else
-			std::cout << "}," << std::endl;
+		if(out.state != ASMOS::first)
+			std::cout << "]";
+		std::cout << "}" << std::endl;
 	}
+	out.state = ASMOS::start;
 
 }
 
@@ -86,7 +117,7 @@ ASMCreator::ASMCreator(FrontEndInterface *f, RegAllocator *r, fstream &o, bool p
 	help_buf = new char[100];
 
 	if (print_json) {
-		std::cout << "\"ASM\":[" << std::endl;
+		std::cout << ",\"ASM\":[" << std::endl;
 	}
 }
 
@@ -101,14 +132,15 @@ void ASMCreator::create_head() {
 
 	/**/
 
-	int ir_num = FEI->ir_num;
+	int ir_num = FEI->ir_list.size();
 	int fi = 0;
 	for (int i = 0; i < ir_num; i++) {
 		IRNode *ir = FEI->getIR(i);
 		if (ir->type == IRType::assign) {
 			VarNode *n = ir->args[1].getVar();
 			n->flag_global_scan = true;
-			out << n->name + ": " + ".word " << ir->args[0].int_imm << endl;
+			sprintf(help_buf, "%s:.word %d", n->name.c_str(), ir->args[0].int_imm);
+			out << help_buf << endl;
 		}
 		else {
 			fi = i;
@@ -131,6 +163,7 @@ void ASMCreator::create_head() {
 	out << ".globl main" << endl;
 	alloc->alloc(fi, ir_num);
 	create_block(fi, ir_num);
+	out.fin();
 }
 
 void ASMCreator::create_block(int start, int end) {
@@ -176,6 +209,9 @@ void ASMCreator::create_block(int start, int end) {
 				break;
 			case IRType::print:
 				create_print(ir);
+				break;
+			case IRType::input:
+				create_input(ir);
 				break;
 			case IRType::ret:
 				create_return(ir);
@@ -430,7 +466,7 @@ void ASMCreator::create_print(IRNode *ir) {
 	IRAType type = ir->args[0].type;
 
 	bool is_a0 = type == IRAType::var && ir->args[0].getVar()->arg_index == 0;
-	if (is_a0) {
+	if (is_a0) {// Õ¼ÓÃa0¼Ä´æÆ÷
 		out << "li" << "$v0" << 1 << endl;
 		out << "syscall" << endl;
 	}
@@ -441,13 +477,13 @@ void ASMCreator::create_print(IRNode *ir) {
 		if (type == IRAType::var) {
 			VarNode *var = ir->args[0].getVar();
 			if (var->at_reg) {
-				out << "li $v0, 1" << endl;
-				out << "move $a0, " << reg_strs[var->reg_index] << endl;
+				out << "li" << "$v0" << "1" << endl;
+				out << "move" << "$a0" << reg_strs[var->reg_index] << endl;
 			}
 			else {
 				int r = load_store(ir, 0);
-				out << "li $v0, 1" << endl;
-				out << "move $a0, " << reg_strs[r] << endl;
+				out << "li" << "$v0" << 1 << endl;
+				out << "move" << "$a0" << reg_strs[r] << endl;
 			}
 		}
 		else if (type == IRAType::temp) {
@@ -461,12 +497,12 @@ void ASMCreator::create_print(IRNode *ir) {
 			out << "li $v0, 1" << endl;
 			int imm = ir->args[0].int_imm;
 			if (imm == 0)
-				out << "li $a0, $0" << endl;
+				out << "li" << "$a0" << "$0" << endl;
 			else
 				out << "li" << "$a0" << imm << endl;
 		}
 		else if (type == IRAType::char_imm) {
-			out << "li $v0, 11" << endl;
+			out << "li" << "$v0" << 11 << endl;
 			char c = ir->args[0].char_imm;
 
 			out << "li" << "$a0" << (int)c << endl;
@@ -477,6 +513,20 @@ void ASMCreator::create_print(IRNode *ir) {
 	}
 
 	
+}
+
+void ASMCreator::create_input(IRNode *ir) {
+
+	VarNode *var = ir->args[0].getVar();
+	out << "li" << "$v0" << 5 << endl;
+	out << "syscall" << endl;
+	if (var->at_reg) {
+		out << "move" << reg_strs[var->reg_index] << "$v0" << endl;
+	}
+	else {
+		out << "sw" << "$v0" << var_offset(var) << endl;
+		//out << "move" << reg_strs[r] << "$v0" << endl;
+	}	
 }
 
 void ASMCreator::create_func(IRNode *ir) {

@@ -66,7 +66,7 @@ void Lex::initTable() {
 	table[0]['-'] = LexState::substract;
 
 	// key
-	for (int j = (int)LexState::int_1; j < (int)LexState::print_5; j++) {
+	for (int j = (int)LexState::int_1; j <= (int)LexState::print_5; j++) {
 		for (int i = 'a'; i <= 'z'; i++)
 			table[j][i] = LexState::ID;
 		for (int i = 'A'; i <= 'Z'; i++)
@@ -108,6 +108,7 @@ void Lex::initTable() {
 
 	table[(int)LexState::int_1]['f'] = LexState::if_2;
 	_setKTI(LexState::if_2, LexState::if_k);
+	_setKTI(LexState::int_2, LexState::in_k);
 	table[(int)LexState::float_1]['o'] = LexState::for_2;
 	table[(int)LexState::for_2]['r'] = LexState::for_3;
 	_setKTI(LexState::for_3, LexState::for_k);
@@ -247,11 +248,11 @@ Token Lex::lex() {
 
 			}
 			
-			//printf("%s\n", yytext);
+			//printf("%s ", yytext);
 
 			Token t = (Token)((int)res - 100);
 			token_list.push_back(t);
-			//std::cout << (int)t;
+			//std::cout << (int)t << std::endl;
 			func[t]();
 
 			return t;

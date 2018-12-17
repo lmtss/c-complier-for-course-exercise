@@ -7,6 +7,8 @@ public:
 	FrontEndInterface(IRCreator *i, STManager *stmanager);
 	~FrontEndInterface();
 
+	void print();
+	void print_for_json();
 	LabelNode *getLabel(IRNode *ir);
 	IRNode *getIR(int i);
 	STManager *stm;

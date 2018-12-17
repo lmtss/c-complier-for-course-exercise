@@ -13,7 +13,7 @@ struct TokenPool {
 	SSNode *astNodes[200];
 	TokenPool() {
 		head = end = expect = 0;
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 200; i++)
 			astNodes[200] = NULL;
 	}
 	void push(Token t, SSNode *node) {
@@ -99,6 +99,7 @@ private:
 	bool parse_while_state();
 	bool parse_for_state();
 	bool parse_print_state();
+	bool parse_in_state();
 
 	bool parse_exp();
 

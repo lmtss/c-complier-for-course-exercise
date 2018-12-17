@@ -11,6 +11,7 @@
 #include <fstream>
 #include <cstdio>
 #include <type_traits>
+#include "DAG.h"
 
 char *yytext;
 Lex *lex;
@@ -53,8 +54,8 @@ int main(int argc, char *argv[]) {
 		Token t = lex->lex();
 		if (t >= Token::error)
 			break;
-	}
-	lex->print();*/
+	}*/
+	//lex->print();
 
 	scopePredictor = new ScopeExpect();
 	irCreator = new IRCreator();
@@ -81,13 +82,17 @@ int main(int argc, char *argv[]) {
 	
 
 	FrontEndInterface *FEI = new FrontEndInterface(irCreator, stManager);
+	DAG dag(FEI);
+	dag.gene_blocks();
+	dag.optimize();
+	if (is_print_to_json)
+		FEI->print_for_json();
+	else
+		FEI->print();
 	RegAllocator *alloc = new RegAllocator(FEI);
-	ASMCreator *ac = new ASMCreator(FEI, alloc, out, false);
+	ASMCreator *ac = new ASMCreator(FEI, alloc, out, is_print_to_json);
 	ac->create_head();
 
-	//alloc->alloc(1, FEI->ir_list.size());
-	
-	//ac->create_block(1, FEI->ir_list.size());
 
 	if (is_print_to_json) {
 		std::cout << std::endl;
