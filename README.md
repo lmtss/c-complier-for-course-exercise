@@ -63,7 +63,9 @@ for-state = "for" ( {assign-exp}? ; logic-or-exp ; {assign-exp}? ) state
 
 return-state = "return" assign-exp ;
 
-print-state = "print" call_arg_list;
+print-state = "print" call-arg-list ;
+
+in-state = "in" call-arg-list ;
 ```
 #### 表达式
 ```
