@@ -7,6 +7,7 @@ public:
 	FrontEndInterface(IRCreator *i, STManager *stmanager);
 	~FrontEndInterface();
 
+	void adjust();
 	void print();
 	void print_for_json();
 	LabelNode *getLabel(IRNode *ir);

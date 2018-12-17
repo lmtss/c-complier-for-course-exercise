@@ -85,6 +85,8 @@ int main(int argc, char *argv[]) {
 	DAG dag(FEI);
 	dag.gene_blocks();
 	dag.optimize();
+
+	FEI->adjust();
 	if (is_print_to_json)
 		FEI->print_for_json();
 	else
