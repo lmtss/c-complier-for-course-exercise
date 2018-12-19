@@ -82,11 +82,10 @@ int main(int argc, char *argv[]) {
 	
 
 	FrontEndInterface *FEI = new FrontEndInterface(irCreator, stManager);
-	DAG dag(FEI);
+	/*DAG dag(FEI);
 	dag.gene_blocks();
-	dag.optimize();
-
-	FEI->adjust();
+	dag.optimize();*/
+	//FEI->adjust();
 	if (is_print_to_json)
 		FEI->print_for_json();
 	else

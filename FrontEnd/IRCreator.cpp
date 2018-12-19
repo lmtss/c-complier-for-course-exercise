@@ -199,7 +199,7 @@ void IRCreator::print_json() {
 // private
 void IRCreator::addIRNode(IRNode *node) {
 	//std::cout << "IR: ";
-	//node->print();
+	node->print();
 	node->next = NULL;
 	
 	node->scope = stm->getCurTable();
@@ -624,5 +624,34 @@ bool IRCreator::handle_in_state() {
 	for (int i = start_index; i < fin_index; i++) {
 		ss_pop();
 	}
+	return true;
+}
+
+bool IRCreator::handle_array_use() {
+	std::cout << "sss";
+	int start_index = sp_top(), fin_index = ss_len();
+	SSNode *node = ss_get(start_index), *index_node = ss_get(start_index + 1);
+	VarNode *var = NULL;
+	_handle_var_undecl(var, node);
+	if (var->varType->index < 4) {
+		return false;
+	}
+	std::cout << "AAAAAAAAAAAAAA";
+	IRNode *ir = new IRNode(IRType::array_use, NULL);
+	ir->setArg(1, var);
+	set_arg(ir, 0, index_node);
+
+	for (int i = start_index; i < fin_index; i++) {
+		ss_pop();
+	}
+
+	TempNode *temp = new TempNode(temp_top_index++);
+	stm->insert(temp);
+	ir->setArg(2, temp);
+
+	addIRNode(ir);
+
+	ss_push(new SSNode(temp));
+
 	return true;
 }

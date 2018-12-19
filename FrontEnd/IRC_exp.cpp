@@ -21,7 +21,19 @@ bool IRCreator::handle_assign_exp() {
 	IRNode *ir = NULL;
 	VarNode *id = NULL, *last_id = NULL;
 	SSNode *left = ss_get(fin_index - 2);
-	if (left->type == SSType::identifier) {
+	int s = 3;
+	if (fin_index - 2 != start_index && ss_get(fin_index - 3)->type == SSType::array) {
+		//std::cout << "SSSSSS"; std::cout << "VVVVVVVVV" << ss_get(fin_index - 3)->string_val;
+		_handle_var_undecl(last_id, ss_get(fin_index - 3)); 
+		ir = new IRNode(IRType::array_assign, NULL);
+		ir->setArg(2, last_id); 
+		_set_arg(ir, 1, ss_get(fin_index - 2));
+		_set_arg(ir, 0, assign_right);
+
+		addIRNode(ir);
+		s = 4;
+	}
+	else if (left->type == SSType::identifier) {
 		_handle_var_undecl(last_id, left);
 		ir = new IRNode(IRType::assign, NULL);
 		ir->setArg(1, last_id);
@@ -30,15 +42,25 @@ bool IRCreator::handle_assign_exp() {
 		addIRNode(ir);
 	}
 
-	for (int i = fin_index - 3; i >= start_index; i--) {
+	for (int i = fin_index - s; i >= start_index; i--) {
 		left = ss_get(i);
+		if (i != start_index && ss_get(i-1)->type == SSType::array) {
+			_handle_var_undecl(id, left);
+			ir = new IRNode(IRType::array_assign, NULL);
+			ir->setArg(2, id);
+			_set_arg(ir, 1, ss_get(i-1));
+			_set_arg(ir, 0, assign_right);
 
-		if (left->type == SSType::identifier) {
+			addIRNode(ir);
+			i--;
+		}
+		else if (left->type == SSType::identifier) {
 			id = NULL;
 			_handle_var_undecl(id, left);
 			ir = new IRNode(IRType::assign, NULL);
 			ir->setArg(1, id);
-			ir->setArg(0, last_id);
+			//ir->setArg(0, last_id);
+			_set_arg(ir, 0, assign_right);
 			last_id = id;
 			
 			addIRNode(ir);
@@ -46,7 +68,8 @@ bool IRCreator::handle_assign_exp() {
 
 	}
 	;
-	SSNode *p = new SSNode(SSType::identifier, 0, last_id->name.c_str());
+	//SSNode *p = new SSNode(SSType::identifier, 0, last_id->name.c_str());
+	SSNode *p = new SSNode(assign_right);
 
 	for (int i = start_index; i < fin_index; i++)
 		ss_pop();

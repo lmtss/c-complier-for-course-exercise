@@ -140,6 +140,7 @@ void ASMCreator::create_head() {
 			VarNode *n = ir->args[1].getVar();
 			n->flag_global_scan = true;
 			sprintf(help_buf, "%s:.word %d", n->name.c_str(), ir->args[0].int_imm);
+
 			out << help_buf << endl;
 		}
 		else {
@@ -219,6 +220,12 @@ void ASMCreator::create_block(int start, int end) {
 			case IRType::func_call:
 				create_call(ir);
 				break;
+			case IRType::array_assign:
+				create_array_assign(ir);
+				break;
+			case IRType::array_use:
+				create_array_use(ir);
+				break;
 			default:
 				break;
 			}
@@ -232,19 +239,28 @@ void ASMCreator::handle_t9(int imm) {
 	out << "li" << "$t9" << imm << endl;
 }
 
-void ASMCreator::handle_t9(VarNode *var) {
+void ASMCreator::handle_t9(VarNode *var, int add = -1) {
 	if (alloc->t(9) != NULL)
 		out << "sw" << "$t9" << alloc->t(9)->stack_address << endl;
-	out << "lw" << "$t9" << var_offset(var) << "($fp)" << endl;
+	if (var->varType->index < 4) {
+		out << "lw" << "$t9" << var_offset(var) << "($fp)" << endl;
+	}
+	else {
+		if(add == -1)
+			out << "addi" << "$t9" << "$fp" << var_offset(var) << endl;
+		else
+			out << "addi" << "$t9" << "$fp" << var_offset(var) + add << endl;
+	}
+	
 }
 
 int ASMCreator::var_offset(VarNode *var) {
 	if (var->is_arg) {
 		//std::cout << var->reg_index << " AAAAAAAA";
-		return creating_def_func->size + var->arg_index * 4;
+		return -(creating_def_func->size + var->arg_index * 4);
 	}
 	else {
-		return creating_def_func->size - 8 - var->stack_address;
+		return -(creating_def_func->size - 8 - var->stack_address - 4);
 	}
 }
 
@@ -494,7 +510,7 @@ void ASMCreator::create_print(IRNode *ir) {
 			}
 		}
 		else if (type == IRAType::int_imm) {
-			out << "li $v0, 1" << endl;
+			out << "li" << "$v0" << "1" << endl;
 			int imm = ir->args[0].int_imm;
 			if (imm == 0)
 				out << "li" << "$a0" << "$0" << endl;
@@ -533,10 +549,11 @@ void ASMCreator::create_func(IRNode *ir) {
 	FuncNode *func = ir->args[0].getFuc();
 	//std::cout << "SSSSSSSSSSS";
 	creating_def_func = func;
+	func->size += 4;
 	out << func->name + ":" << endl;
-	out << "addiu" << "$sp" << "$sp" << -func->size << endl;
-	out << "sw" << "$ra" << func->size - 4 << "($sp)" << endl;
-	out << "sw" << "$fp" << func->size - 8 << "($sp)" << endl;
+	out << "addiu" << "$sp" << "$sp" << func->size << endl;
+	out << "sw" << "$ra" << -func->size + 4 << "($sp)" << endl;
+	out << "sw" << "$fp" << -func->size + 8 << "($sp)" << endl;
 	out << "move" << "$fp" << "$sp" << endl;
 
 }
@@ -672,10 +689,63 @@ void ASMCreator::create_return(IRNode *ir) {
 	}
 
 	out << "move" <<  "$sp" << "$fp" << endl;
-	out << "lw" << "$ra" << func->size - 4 << "($sp)" << endl;
-	out << "lw" << "$fp" << func->size - 8 << "($sp)" << endl;
-	out << "addiu" << "$sp" << "$sp" << func->size << endl;
+	out << "lw" << "$ra" << -func->size + 4 << "($fp)" << endl;
+	out << "lw" << "$fp" << -func->size + 8 << "($fp)" << endl;
+	out << "addiu" << "$sp" << "$sp" << -func->size << endl;
 	out << "jr" << "$ra" << endl;
 	out << "nop" << endl;
 	
+}
+
+void ASMCreator::create_array_assign(IRNode *ir) {
+	VarNode *arr = ir->args[2].getVar();
+	
+	if (ir->args[1].type != IRAType::int_imm) {
+		handle_t9(arr);// 数组基地址在 $t9
+		int r = load_store(ir, 1);
+		out << "sll" << "$v1" << reg_strs[r] << 2 << endl;// *4
+		out << "add" << "$v1" << "$t9" << "$v1" << endl;// 元素地址在 $v1
+
+		if (ir->args[0].type != IRAType::int_imm) {
+			int r = load_store(ir, 0);
+
+			out << "sw" << reg_strs[r] << "($v1)" << endl;
+		}
+		else {
+			handle_t9(ir->args[0].int_imm);
+			out << "sw" << "$t9" << "($v1)" << endl;
+		}
+	}
+	else {
+		//handle_t9(arr, ir->args[1].int_imm*4);// 元素地址在 $t9
+		if (ir->args[0].type != IRAType::int_imm) {
+			int r = load_store(ir, 0);
+
+			out << "sw" << reg_strs[r] << var_offset(arr) + ir->args[1].int_imm * 4 << "($fp)" << endl;
+		}
+		else {
+			handle_t9(ir->args[0].int_imm);
+			out << "sw" << "$t9" << var_offset(arr) + ir->args[1].int_imm * 4 << "($fp)" << endl;
+		}
+	}
+
+	
+}
+
+void ASMCreator::create_array_use(IRNode *ir) {
+	VarNode *arr = ir->args[1].getVar();
+
+	if (ir->args[0].type != IRAType::int_imm) {
+		handle_t9(arr);// 数组基地址在 $t9
+		int r = load_store(ir, 0);
+		out << "sll" << "$v1" << reg_strs[r] << 2 << endl;// *4
+		out << "add" << "$t9" << "$t9" << "$v1" << endl;// 元素地址在 $t9
+
+		r = load_store(ir, 2);
+		out << "lw" << reg_strs[r] << "($t9)" << endl;
+	}
+	else {
+		int r = load_store(ir, 2);
+		out << "lw" << reg_strs[r] << var_offset(arr) + ir->args[0].int_imm * 4 << "($fp)" << endl;
+	}
 }

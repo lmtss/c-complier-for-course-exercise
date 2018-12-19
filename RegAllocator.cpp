@@ -84,6 +84,8 @@ void RegAllocator::discover_live_ranges(int start_index, int end_index) {
 void RegAllocator::sb_alloc(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
 		IRNode *ir = _get_ir(i);
+		if (ir->type == IRType::array_assign || ir->type == IRType::array_use)
+			continue;
 		for (int i = 0; i < 3; i++) {
 			if (ir->args[i].type == IRAType::var) {
 				VarNode *var = ir->args[i].getVar();
@@ -207,7 +209,32 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 					temp->live_end = i+1;
 			}
 		}
-		
+		else if (ir->type == IRType::array_assign) {
+			TempNode *temp = NULL;
+			for (int j = 0; j < 2; j++) {
+				if (ir->args[j].type == IRAType::temp) {
+					temp = ir->args[j].temp;
+					//if (temp->live_end == 0)
+					temp->live_end = i;
+				}
+			}
+			
+		}
+		else if (ir->type == IRType::array_use) {
+			TempNode *temp = NULL;
+			if (ir->args[2].type == IRAType::temp) {
+				temp = ir->args[2].temp;
+				if (temp->live_start == 0) {
+					temp->live_start = i;
+					unhandled.push(temp);
+				}
+
+			}
+			if (ir->args[0].type == IRAType::temp) {
+				temp = ir->args[0].temp;
+				temp->live_end = i;
+			}
+		}
 	}
 
 

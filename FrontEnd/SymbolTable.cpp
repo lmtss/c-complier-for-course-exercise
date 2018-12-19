@@ -156,3 +156,11 @@ VarNode* STManager::insert(string& name, int level, TypeNode *type, int line) {
 
 	return id;
 }
+
+void STManager::insert(string& name, int level, int len, int line) {
+	TypeNode *type = new TypeNode;
+	type->index = cur_type_index++;
+	type->len = len * 4;
+
+	VarNode *v = insert(name, level, type, line);
+}

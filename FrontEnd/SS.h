@@ -5,7 +5,7 @@ enum class SSType {
 	identifier, func_call, func_decl, array_left, array_right,
 	add, sub, mult, div, mod,
 	int_k = 50, float_k, void_k, else_k, 
-	temp_var, ir, label
+	temp_var, ir, label,array
 };
 
 struct IRNode;

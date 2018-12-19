@@ -127,6 +127,8 @@ public:
 	VarNode* findCurTable(string& str) const;
 	FuncNode* findFunc(string& str) const;
 	VarNode* insert(string& name, int level, TypeNode *type, int line);
+	void insert(string& name, int level, int len, int line);
+
 	void insert(int i) {
 		temp_list.push_back(new TempNode(i));
 	}
@@ -153,6 +155,8 @@ private:
 
 	int curLevel;
 	int curGlobalIndex;
+
+	int cur_type_index = 4;
 	
 	map<string, FuncNode*> funcTable;
 
@@ -161,4 +165,3 @@ private:
 	};
 
 };
-

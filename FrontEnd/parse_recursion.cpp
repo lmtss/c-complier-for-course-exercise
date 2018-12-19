@@ -117,8 +117,8 @@ bool Parser::parse_init_declarator() {
 	}
 
 	HE(irc->handle_init_declarator());
-
-	irc->clear_temp();
+	
+	//irc->clear_temp();
 
 	irc->pop_sp();
 
@@ -148,6 +148,16 @@ bool Parser::parse_declarator() {
 			HE(parse_decl_param_list());
 			expect(Token::RB);
 		}
+	}
+	else if (ret == Token::LSB) {// array
+		
+		SSNode *n = val();
+		n->type = SSType::array;
+		irc->ss_push(n);
+
+		get_token();
+		HE(parse_additive_exp());
+		expect(Token::RSB);
 	}
 	else {
 		irc->ss_push(val());
@@ -423,26 +433,42 @@ bool Parser::parse_assign_exp() {
 
 	bool is_lb = false;
 	Token ret;
+
+	int lb_num = 0, lsb_num = 0;
+
 	while (true) {
 		ret = expect_token();
-		if (ret == Token::LB) {
-			//is_lb = true;
-			/*get_token();
-			HE(parse_assign_exp());
-			expect(Token::RB);*/
+		if (ret == Token::LB || ret == Token::LSB) {
+			lb_num++;
+		}
+		else if (ret == Token::RB || ret == Token::RSB) {
+			lb_num--;
+			if (lb_num < 0) {
+				expect_clear();
+
+				HE(parse_additive_exp());
+
+				break;
+			}
+		}
+		/*if (ret == Token::LB) {
+
 			expect_clear();
 			HE(parse_additive_exp());
 
 			break;
-		}
-		else if (ret == Token::comma || ret == Token::semicolon || ret == Token::RB) {// assign_right
+		}*/
+		else if (ret == Token::comma && lb_num == 0
+			|| ret == Token::semicolon && lb_num == 0
+			//|| ret == Token::RB
+			) {
 			expect_clear();
 			
 			HE(parse_additive_exp());
 
 			break;
 		}
-		else if (ret == Token::assign && !is_lb) {// assign_left
+		else if (ret == Token::assign && lb_num == 0) {// assign_left
 			expect_clear();
 			//std::cout << "ASSL" << std::endl;
 			HE(parse_assign_left());
@@ -452,9 +478,9 @@ bool Parser::parse_assign_exp() {
 	}
 	
 	
-
+	//std::cout << "11";
 	HE(irc->handle_assign_exp());
-
+	//std::cout << "22";
 	irc->pop_sp();
 
 	return true;
@@ -527,11 +553,16 @@ bool Parser::parse_postfix_exp() {
 		Token t1 = expect_token();
 		if (t1 == Token::LSB) {
 			get_token();
+			SSNode *n = val();
+			n->type = SSType::array;
+			irc->ss_push(n);
+
 			get_token();//[
-			//
-			HE(parse_const_exp());
+			
+			HE(parse_assign_exp());
 			expect(Token::RSB);
 
+			HE(irc->handle_array_use());
 		}
 		else if (t1 == Token::LB) {
 			//std::cout << "FC EXP" << std::endl;
@@ -563,17 +594,19 @@ bool Parser::parse_postfix_exp() {
 	return true;
 }
 bool Parser::parse_assign_left() {
-	Token t0 = expect_token();
+	//Token t0 = expect_token();
 	expect(Token::identifier);
 	
 	//ASTNode *id = lex_val;
 	if (expect_token() == Token::LSB) {
-		get_token();
-		//irc->ss_push(val());
-		//id
+		
+		SSNode *id = val();
+		id->type = SSType::array;
+		irc->ss_push(id);
+
 		get_token();//[
-					//
-		HE(parse_const_exp());
+
+		HE(parse_assign_exp());
 		expect(Token::RSB);
 
 	}

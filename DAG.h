@@ -1,7 +1,7 @@
 #include "FrontEndInterface.h"
 
 string ops[] = {
-	"add", "sub", "mult", "div", "assign"
+	"add", "sub", "mult", "div", "assign","func_call","input","print"
 };
 
 //DAG结点
@@ -11,11 +11,12 @@ struct DNode {
 	IRType ir;	//运算符
 	int M;	//主标记的下标
 	vector<IRArg> A;	//标记(包含主标记),存引用
-	int oprs[2];  //后继结点下标
+	vector<int> oprs;  //后继结点下标
 	vector<int> pioneer; //前驱结点下标
 	DNode(IRType ir) :
 		ir(ir){
-			oprs[0] = oprs[1] = -1;
+			oprs.push_back(-1);
+			oprs.push_back(-1);
 			isuseful = false;
 		}
 	void print() {
@@ -27,7 +28,7 @@ struct DNode {
 			cout << ' ';
 		}
 		cout << '|';
-		for (int i = 1; i >= 0; --i) {
+		for (int i = oprs.size() - 1; i >= 0; --i) {
 			if (oprs[i] >= 0) {
 				cout << oprs[i] << ' ';
 			}
@@ -95,7 +96,7 @@ inline void DAG::gene_blocks()
 	for (int i = 0; i < _size; ++i) {
 		IRNode* curIR = FEI->ir_list[i]; //当前扫描到的四元式
 
-		if (curIR->type == IRType::ret || curIR->type == IRType::func_param_in || curIR->type == IRType::print) {
+		if (curIR->type == IRType::ret ) {
 			reserve_temp.push_back(curIR->args[0]);
 		}
 
@@ -109,10 +110,8 @@ inline void DAG::gene_blocks()
 				reserve_temp.clear();
 			}
 			start = i + 1;
-			cout << "shit" << endl;
-			curIR->print();
 		}
-		else if(curIR->label != NULL  ) {
+		else if (curIR->label != NULL) {
 			if (start < i) {
 				if (i > 0) {
 					end = i - 1;
@@ -121,14 +120,10 @@ inline void DAG::gene_blocks()
 				}
 			}
 			start = i;
-			cout << "fuck" << endl;
-			curIR->print();
 		}
 	}
-	if (end < start) {
-		cout << "fuck" << endl;
-	}
-	cout << "fuckyou" << endl;
+	//cout << "fuckyou" << endl;
+	/*
 	for (auto it : blocks) {
 		cout << it.start << ' ' << it.end << endl;
 		for (auto jt : it.reserve_temp) {
@@ -136,12 +131,12 @@ inline void DAG::gene_blocks()
 		}
 		cout << endl;
 	}
+	*/
 }
 
 inline void DAG::optimize(){
 	//扫描每个基本块
 	for (auto block : blocks) {
-
 		//生成DAG图
 		for (int i = block.start; i <= block .end; ++i) {
 			IRNode* curIR = FEI->ir_list[i]; //当前扫描到的四元式
@@ -206,7 +201,7 @@ inline void DAG::optimize(){
 					}
 					
 					//调换主标记(if necessary)
-					if (curIR->args[1].type == IRAType::var && curIR->args[0].type == IRAType::temp ) {
+					if (curIR->args[1].type == IRAType::var && curNode.A[curNode.M].type == IRAType::temp ) {
 						//用户变量 = 临时变量时
 						curNode.M = index_arg1; //将args[1]作为主标记
 					}
@@ -287,6 +282,34 @@ inline void DAG::optimize(){
 					}
 					else {
 						index1 = find1->second;
+					}
+
+					if (block.nodes[index0].A[block.nodes[index0].M].type == IRAType::int_imm && block.nodes[index1].A[block.nodes[index1].M].type == IRAType::int_imm) {
+						//等式右边全为常数，直接计算，按照赋值语句处理
+
+						//四元式整理
+						int rst;	//结果
+						switch (curIR->type) {
+						case IRType::add:
+							rst = block.nodes[index1].A[block.nodes[index1].M].int_imm + block.nodes[index0].A[block.nodes[index0].M].int_imm;
+							break;
+						case IRType::sub:
+							rst = block.nodes[index1].A[block.nodes[index1].M].int_imm - block.nodes[index0].A[block.nodes[index0].M].int_imm;
+							break;
+						case IRType::mult:
+							rst = block.nodes[index1].A[block.nodes[index1].M].int_imm * block.nodes[index0].A[block.nodes[index0].M].int_imm;
+							break;
+						case IRType::div:
+							rst = block.nodes[index1].A[block.nodes[index1].M].int_imm / block.nodes[index0].A[block.nodes[index0].M].int_imm;
+							break;
+						}
+						curIR->type = IRType::assign;	//设置为赋值操作符
+						curIR->args[1] = curIR->args[2]; //左值交换位置
+						curIR->setArg(0, rst);	//右值
+
+						//DAG结点处理(重新扫描)
+						i--;
+						continue;
 					}
 
 					//引用结点
@@ -375,18 +398,189 @@ inline void DAG::optimize(){
 						}
 
 					}
+					
 				}
+				
+			}
+			else if (curIR->type == IRType::func_call) {
+				//函数调用
+
+				vector<int> params;	//参数列表
+				//搜索参数
+				int t;
+				for (t = i + 1; t <= block.end; ++t) {
+					if (FEI->ir_list[t]->type != IRType::func_param_in) break;
+					else {
+						auto find = block.mIR.find(FEI->ir_list[t]->args[0]);
+						int index;
+						if (find == block.mIR.end()) {
+							//结点不存在，新建结点
+
+							int _size = block.nodes.size();
+
+							//更新map
+							block.mIR[FEI->ir_list[t]->args[0]] = _size;
+
+							//更新nodes
+							block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+							DNode& curNode = block.nodes[_size]; //引用当前结点
+
+							curNode.A.push_back(FEI->ir_list[t]->args[0]);//加入标记
+							curNode.M = 0;	//主标记
+
+							index = _size;	//更新index值
+						}
+						else {
+							index = find->second;
+						}
+						params.push_back(index);
+					}
+				}
+				i = t - 1;
+
+				//搜索函数指针
+				auto find0 = block.mIR.find(curIR->args[0]);
+				int index0;
+				if (find0 == block.mIR.end()) {
+					//结点不存在,新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[0]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[0]);//加入标记
+					curNode.M = 0;	//主标记
+
+					index0 = _size;	//更新index值
+				}
+				else {
+					index0 = find0->second;
+				}
+
+
+				//新建结点
+				int _size = block.nodes.size();
+
+				//更新map
+				block.mIR[curIR->args[1]] = _size;
+
+				//更新nodes
+				block.nodes.push_back(DNode(curIR->type)); //创建一个结点
+				DNode& curNode = block.nodes[_size]; //引用当前结点
+
+
+				curNode.A.push_back(curIR->args[1]);//加入标记
+				curNode.M = 0;	//主标记
+
+				//添加前驱后继
+
+				//后继
+				curNode.oprs[0] = index0;
+				for (int j = 0; j < params.size(); ++j) {
+					if (j + 1 >= curNode.oprs.size()) {
+						curNode.oprs.push_back(params[j]);
+					}
+					else {
+						curNode.oprs[j + 1] = params[j];
+					}
+				}
+
+				//引用结点
+				DNode& curNode0 = block.nodes[index0];
+
+				//前驱
+				curNode0.pioneer.push_back(_size);
+
+				//设为根结点
+				curNode.isRoot = true;
+				curNode0.isRoot = false;
+
+				for (int j = 0; j < params.size(); ++j) {
+
+					DNode& curNodej = block.nodes[params[j]];
+
+					curNodej.pioneer.push_back(_size);
+					curNodej.isRoot = false;
+				}
+
+			}
+			else if (curIR->type == IRType::print ) {
+				//更新nodes
+				int _size = block.nodes.size();
+
+				block.nodes.push_back(DNode(curIR->type)); //创建一个结点
+				DNode& curNode = block.nodes[_size]; //引用当前结点
+
+
+				curNode.A.push_back(curIR->args[0]);//加入标记
+				curNode.M = 0;
+
+				curNode.isRoot = true;
+
+				if (curIR->args[0].type == IRAType::var) {
+
+					//寻找该结点
+					auto find = block.mIR.find(curIR->args[0]);
+					int index;
+					if (find == block.mIR.end()) {
+						//结点不存在，新建结点
+
+						int _size0 = block.nodes.size();
+
+						//更新map
+						block.mIR[curIR->args[0]] = _size0;
+
+						//更新nodes
+						block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+						DNode& curNode = block.nodes[_size0]; //引用当前结点
+
+						curNode.A.push_back(curIR->args[0]);//加入标记
+						curNode.M = 0;	//主标记
+
+						index = _size0;	//更新index值
+					}
+					else {
+						index = find->second;
+						curNode.A[0] = block.nodes[find->second].A[block.nodes[find->second].M];//更换
+					}
+
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					//作为根结点
+					curNode.oprs[0] = index;
+				}
+
+			}
+			else if (curIR->type == IRType::input) {
+				//更新nodes
+				int _size = block.nodes.size();
+
+				//更新map
+				block.mIR[curIR->args[0]] = _size;
+
+				block.nodes.push_back(DNode(curIR->type)); //创建一个结点
+				DNode& curNode = block.nodes[_size]; //引用当前结点
+
+
+				curNode.A.push_back(curIR->args[0]);//加入标记
+				curNode.M = 0;
+
+				curNode.isRoot = true;
 			}
 		}
 		
-		block.print();
+		//block.print();
 		
 		//根据DAG生成优化四元式
 		int length = block.start; //四元式总数，初始化为基本块开始
 		while (length <= block.end) {
 			//绕过其他四元式
 			IRNode* curIR = FEI->ir_list[length]; //当前扫描到的四元式
-			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div) {
+			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::print|| curIR->type == IRType::input) {
 				break;
 			}
 			else {
@@ -404,25 +598,44 @@ inline void DAG::optimize(){
 		for (int i = 0; i < block.nodes.size(); ++i) {
 			DNode& curNode = block.nodes[i];	//当前结点
 			if (curNode.isRoot == true) {
-				if (curNode.A[curNode.M].type == IRAType::int_imm)
+				if (curNode.A[curNode.M].type == IRAType::int_imm|| curNode.ir == IRType::input)
 					curNode.isuseful = true;
-				else if (curNode.A[curNode.M].type == IRAType::var||block.isreserve_temp(curNode.A[curNode.M])) {
+				else if (curNode.A[curNode.M].type == IRAType::var|| curNode.A[curNode.M].type == IRAType::temp) {
 					int ok = 0;
 					for (int j = 0; j < curNode.A.size(); j++) {
 						if (block.mIR[curNode.A[j]] == i) {
-							if (curNode.A[j].type == IRAType::var||block.isreserve_temp(curNode.A[curNode.M])) {
+							if (curNode.A[j].type == IRAType::var|| curNode.A[curNode.M].type == IRAType::temp) {
 								ok = 1;
 								break;
 							}
 						}
 					}
+					if (curNode.ir == IRType::func_call|| curNode.ir == IRType::print) ok = 1;
 					if (ok) {
 						curNode.isuseful = true;
-						if (curNode.oprs[0] != -1) {
+						if (curNode.oprs[1] != -1) {
+							for (int j = 0; j < curNode.oprs.size(); ++j) {
+								block.open(curNode.oprs[j]);
+							}
+						}
+						else if (curNode.oprs[0] != -1) {
 							block.open(curNode.oprs[0]);
-							block.open(curNode.oprs[1]);
 						}
 					}
+				}
+				else if (curNode.ir == IRType::func_call) {
+					curNode.isuseful = true;
+					if (curNode.oprs[1] != -1) {
+						for (int j = 0; j < curNode.oprs.size(); ++j) {
+							block.open(curNode.oprs[j]);
+						}
+					}
+					else if (curNode.oprs[0] != -1) {
+						block.open(curNode.oprs[0]);
+					}
+				}
+				else if (curNode.ir == IRType::print) {
+					curNode.isuseful = true;
 				}
 			}
 		}
@@ -434,27 +647,46 @@ inline void DAG::optimize(){
 
 			if (curNode.isuseful) {
 				//首先做运算
-				if (curNode.oprs[0] != -1) {
+				if (curNode.oprs[0] != -1 && curNode.ir != IRType::print) {
+					if (curNode.ir != IRType::func_call) {
+						//替换操作符
+						FEI->ir_list[length]->type = curNode.ir;
 
-					//替换操作符
-					FEI->ir_list[length]->type = curNode.ir;
+						//替换操作数
+						FEI->ir_list[length]->args[2] = curNode.A[curNode.M];
+						FEI->ir_list[length]->args[1] = block.nodes[curNode.oprs[1]].A[block.nodes[curNode.oprs[1]].M];
+						FEI->ir_list[length]->args[0] = block.nodes[curNode.oprs[0]].A[block.nodes[curNode.oprs[0]].M];
+					}
+					else {
+						//替换操作符
+						FEI->ir_list[length]->type = curNode.ir;
 
-					//替换操作数
-					FEI->ir_list[length]->args[2] = curNode.A[curNode.M];
-					FEI->ir_list[length]->args[1] = block.nodes[curNode.oprs[1]].A[block.nodes[curNode.oprs[1]].M];
-					FEI->ir_list[length]->args[0] = block.nodes[curNode.oprs[0]].A[block.nodes[curNode.oprs[0]].M];
+						//替换操作数
+						FEI->ir_list[length]->args[1] = curNode.A[curNode.M];
+						FEI->ir_list[length]->args[0] = block.nodes[curNode.oprs[0]].A[block.nodes[curNode.oprs[0]].M];
+
+						//以下生成参数调用四元式
+						for (int j = 1; j < curNode.oprs.size(); ++j) {
+							if (curNode.oprs[j] != -1) {
+								FEI->ir_list[++length]->type = IRType::func_param_in;
+
+								FEI->ir_list[length]->args[0] = block.nodes[curNode.oprs[j]].A[block.nodes[curNode.oprs[j]].M];
+							}
+						}
+					}
 
 					//移动到下一个
 					length++;
 				}
-
 				//然后赋值
 				for (int j = 0; j < curNode.A.size(); ++j) {
 					//扫描标记
 					if (j == curNode.M) continue; //跳过主标记
-					if (curNode.A[j].type == IRAType::var|| block.isreserve_temp(curNode.A[curNode.M])) {
+					if (curNode.A[j].type == IRAType::var || block.isreserve_temp(curNode.A[curNode.M])) {
 						//如果有用户变量或保留的临时变量
-						if (block.mIR[curNode.A[j]] != i) break;	//非最新
+						if (block.mIR[curNode.A[j]] != i) {
+							continue;	//非最新
+						}
 						else {
 							//如果是最新,添加四元式
 							FEI->ir_list[length]->type = IRType::assign;
@@ -468,6 +700,29 @@ inline void DAG::optimize(){
 						}
 					}
 				}
+				//特殊处理
+				if (curNode.ir == IRType::input) {
+					FEI->ir_list[length]->type = IRType::input;
+					FEI->ir_list[length]->args[0] = curNode.A[curNode.M];
+
+					//移动到下一个四元式
+					length++;
+				}
+				else if (curNode.ir == IRType::print) {
+
+					FEI->ir_list[length]->type = IRType::print;
+
+					auto find = block.mIR.find(curNode.A[curNode.M]);
+					if (find != block.mIR.end()) {
+						FEI->ir_list[length]->args[0] = block.nodes[find->second].A[block.nodes[find->second].M];
+					}
+					else {
+						FEI->ir_list[length]->args[0] = curNode.A[curNode.M];
+					}
+
+					//移动到下一个四元式
+					length++;
+				}
 			}
 
 		}
@@ -475,14 +730,27 @@ inline void DAG::optimize(){
 		//删除无用四元式
 		while (length <= block.end) {
 			IRNode* curIR = FEI->ir_list[length]; //当前扫描到的四元式
-			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div) {
+			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::func_param_in|| curIR->type == IRType::print|| curIR->type == IRType::input) {
 				curIR->type = IRType::null;
 			}
 			else {
-				for (int i = 0; i < 3; ++i) {
-					if (block.mIR.find(curIR->args[i]) != block.mIR.end()) {
-						auto index = block.mIR.find(curIR->args[i]);
-						curIR->setArg(i, &block.nodes[index->second].A[block.nodes[index->second].M]);
+				if (curIR->type == IRType::equal_jump|| curIR->type == IRType::unequal_jump || curIR->type == IRType::ge_jump || curIR->type == IRType::le_jump || curIR->type == IRType::greater_jump|| curIR->type == IRType::less_jump) {
+					for (int i = 0; i < 2; ++i) {
+						if (block.mIR.find(curIR->args[i]) != block.mIR.end()) {
+							auto index = block.mIR.find(curIR->args[i]);
+							if (block.nodes[index->second].A[block.nodes[index->second].M].type == IRAType::int_imm && curIR->args[i].type == IRAType::var) {
+								continue;
+							}
+							else curIR->setArg(i, &block.nodes[index->second].A[block.nodes[index->second].M]);
+						}
+					}
+				}
+				else {
+					for (int i = 0; i < 3; ++i) {
+						if (block.mIR.find(curIR->args[i]) != block.mIR.end()) {
+							auto index = block.mIR.find(curIR->args[i]);
+							curIR->setArg(i, &block.nodes[index->second].A[block.nodes[index->second].M]);
+						}
 					}
 				}
 				length++;
@@ -504,9 +772,13 @@ inline void DAG::optimize(){
 
 inline void Eblock::open(int i) {
 	nodes[i].isuseful = true;
-	if (nodes[i].oprs[0] != -1) {
+	if (nodes[i].oprs[1] != -1) {
+		for (int j = 0; j < nodes[i].oprs.size(); ++j) {
+			open(nodes[i].oprs[j]);
+		}
+	}
+	else if (nodes[i].oprs[0] != -1) {
 		open(nodes[i].oprs[0]);
-		open(nodes[i].oprs[1]);
 	}
 }
 

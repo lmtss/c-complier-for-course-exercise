@@ -16,12 +16,12 @@
 extern STManager* stManager;
 
 enum class IRAType {
-	int_imm, float_imm, var, temp, NONE, jump_label, func, char_imm
+	int_imm, float_imm, var, temp, NONE, jump_label, func, char_imm, array
 };
 enum class IRType {
 	add, sub, mult, div, assign, ret, func, func_call, func_param_in,
 	equal_jump, unequal_jump, ge_jump, le_jump, greater_jump, less_jump, jump,
-	print, null, input
+	print, null, input, array_assign, array_use
 };
 
 struct IRNode;
@@ -67,6 +67,9 @@ struct IRArg {
 		case IRAType::var:
 			std::cout << id->name;
 			break;
+		case IRAType::array:
+			std::cout << id->name;
+			break;
 		case IRAType::temp:
 			std::cout << 't' << temp->index;
 			break;
@@ -95,6 +98,12 @@ struct IRArg {
 			case IRAType::temp:
 				return temp == b.temp;
 				break;
+			case IRAType::func:
+				return id == b.id;
+				break;
+			case IRAType::char_imm:
+				return char_imm == b.char_imm;
+				break;
 			default:
 				return false;
 				break;
@@ -115,6 +124,12 @@ struct IRArg {
 			case IRAType::temp:
 				return temp < b.temp;
 				break;
+			case IRAType::func:
+				return id < b.id;
+				break;
+			case IRAType::char_imm:
+				return char_imm < char_imm;
+				break;
 			default:
 				return false;
 				break;
@@ -124,6 +139,9 @@ struct IRArg {
 			return type < b.type;
 		}
 	}
+
+
+	
 };
 
 struct TempType {
@@ -270,6 +288,21 @@ struct IRNode {
 			std::cout << "in ";
 			args[0].print();
 			break;
+		case IRType::array_assign:
+			args[2].print();
+			std::cout << "[";
+			args[1].print();
+			std::cout << "] :=";
+			args[0].print();
+			break;
+		case IRType::array_use:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "[";
+			args[0].print();
+			std::cout << "]";
+			break;
 		default:
 			break;
 		}
@@ -384,6 +417,21 @@ struct IRNode {
 			std::cout << "in ";
 			args[0].print();
 			break;
+		case IRType::array_assign:
+			args[2].print();
+			std::cout << "[";
+			args[1].print();
+			std::cout << "] :=";
+			args[0].print();
+			break;
+		case IRType::array_use:
+			args[2].print();
+			std::cout << ":= ";
+			args[1].print();
+			std::cout << "[";
+			args[0].print();
+			std::cout << "]";
+			break;
 		default:
 			break;
 		}
@@ -406,8 +454,15 @@ struct IRNode {
 		args[i].type = IRAType::float_imm;
 	}
 	void setArg(int i, VarNode *var) {
-		args[i].id = var;
-		args[i].type = IRAType::var;
+		if (var->varType->index < 4) {
+			args[i].id = var;
+			args[i].type = IRAType::var;
+		}
+		else {// array
+			args[i].id = var;
+			args[i].type = IRAType::array;
+		}
+		
 	}
 	void setArg(int i, LabelNode *l) {
 		args[i].label = l;
@@ -427,6 +482,7 @@ struct IRNode {
 		args[i].char_imm = c;
 		args[i].type = IRAType::char_imm;
 	}
+
 	//
 	static int index_assign_exp;
 };
@@ -553,6 +609,8 @@ public:
 	bool handle_for_state_1();
 	bool handle_for_state_2();
 	bool handle_for_state_3();
+
+	bool handle_array_use();
 
 	bool is_parse_if = false;
 	bool is_parse_else = false;

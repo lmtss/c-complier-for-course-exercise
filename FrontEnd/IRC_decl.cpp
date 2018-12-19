@@ -67,7 +67,29 @@ bool IRCreator::handle_init_declarator() {
 
 		}
 	}
+	else if (id->type == SSType::array) {
+		VarNode *find_res = stm->findCurTable(id->string_val), *insert_res = NULL;
+		if (find_res != NULL) {
+			// already decl
+			RedeclaredError *e = new RedeclaredError(stm->getCurFunc(), id->code_line, id->string_val);
+			em->addEN(e);
+			return false;
+		}
+		else if (type == stm->getBasicType(2)) {
+			DeclVoidError *e = new DeclVoidError(stm->getCurFunc(), id->code_line, id->string_val);
+			em->addEN(e);
+			return false;
+		}
+		else {
+			SSNode *index = ss_get(declarator_index + 1);
+			if (index->type != SSType::int_const) {
+				return false;
+			}
+			
+			stm->insert(id->string_val, stm->getCurLevel(), index->int_val, id->code_line);
 
+		}
+	}
 	
 
 	for (int i = declarator_index; i < fin_index; i++)
