@@ -1,0 +1,238 @@
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    background-color: rgb(51, 51, 51);
+    overflow: hidden;
+}
+
+.tool-button{
+    display: inline-block;
+    cursor: pointer;
+}
+
+.tool-button:hover{
+    color: azure;
+}
+
+.code-view{
+    position: absolute;
+    background-color: rgb(30, 30, 30);
+    width: 95%;
+    top: 5%;
+    height: 95%;
+    
+    overflow-y: scroll;
+}
+::-webkit-scrollbar {     
+    background-color: transparent;
+    width: .8em
+}
+::-webkit-scrollbar-button{
+    display: none;
+}
+::-webkit-scrollbar-thumb{
+    background-color: rgb(61, 61, 61)
+}
+::-webkit-scrollbar-track{
+    background-color: transparent;
+}
+/*
+.code-view *::selection{
+    background-color: rgb(58,60,65)
+}
+
+.code-view >*::selection{
+    background-color: rgb(58,60,65)
+}*/
+
+.code-view *{
+    position: relative;
+    
+}
+
+.code-view > p{
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#source-code-view > p > *{
+    margin-right: 2px;
+}
+
+.code-view-line-num{
+    display: inline-block;
+    width: 35px;
+    color: rgb(84,84,84);
+    text-align: right;
+}
+
+.code-view-line-num-space{
+    display: inline-block;
+    width: 15px;
+}
+
+.highlight-key-type{
+    color: rgb(85, 140, 165);
+}
+
+.highlight-id{
+    color: rgb(156, 208, 198);
+}
+
+.highlight-symbol{
+    color: rgb(200,200,200)
+}
+
+.highlight-const{
+    color: rgb(180,206,168)
+}
+
+.highlight-key-s{
+    color: brown
+}
+
+.code-space{
+    display: inline-block;
+    width: 5px;
+    height: 100%;
+    background-color: aquamarine
+}
+
+.code-t{
+    display: inline-block;
+    width: 10px;
+    height: 100%;
+    background-color: red
+}
+
+.code-label{
+    display: inline-block;
+    width: 25px;
+    margin-right: 0;
+    color: rgb(156, 208, 198);
+}
+/*
+.code-view-container{
+    position: absolute;
+    width: 100%;
+    top: 5%;
+    height: 90%;
+}*/
+
+.code-view-container-f{
+    height: 65%;
+}
+
+.code-view-container{
+    position: absolute;
+    width: 45%;
+    top: 5%;
+    height: 90%;
+}
+
+#left-code-view-container{
+    left: 1%;
+}
+#right-code-view-container{
+    left: 48%;
+}
+
+.error-view-container{
+    position: fixed;
+    bottom: 0;
+    height: 0;
+    width: 100%;
+    background-color: rgb(30, 30, 30);
+}
+
+.error-view-container-e{
+    position: fixed;
+    bottom: 0;
+    height: 20%;
+    width: 100%;
+    overflow: hidden;
+}
+
+#error-view > p{
+    position: relative;
+    margin-bottom: 4px;
+    margin-top: 1px;
+    
+}
+
+#error-view{
+    position: relative;
+    left: 5px;
+    top: 5px;
+    width: calc(100% - 10px);
+    height: 80%;
+    overflow-y: scroll;
+    background-color: rgb(150, 150, 150);
+}
+
+.e-line-span{
+    text-align: left;
+    display: inline-block;
+    width: 40px;
+    color: darkred;
+}
+
+.e-content-span{
+    color: darkred;
+}
+
+.e-func-span{
+    color: aliceblue;
+}
+.e-top{
+    position: relative;
+    left: 5px;
+    top: 5px;
+    width: calc(100% - 10px);
+    overflow-y: scroll;
+    background-color: rgb(150, 150, 150);
+}
+.e-top-line{
+    text-align: left;
+    display: inline-block;
+    width: 35px;
+    color: aliceblue;
+    border-right: 1px solid black;
+}
+
+
+.highlight-asm-op{
+    display: inline-block;
+    color: aqua;
+    width: 40px;
+}
+
+.highlight-asm-arg{
+    display: inline-block;
+    color: white;
+    width: 36px;
+}
+
+.highlight-asm-fin-arg{
+    color: white;
+}
+.highlight-asm-label{
+    color: bisque;
+}
+.asm-left-space{
+    display: inline-block;
+    width: 40px;
+}
+
+.cs-button-container{
+    position: absolute;
+
+}
+
+.cs-button{
+    position: relative;
+}

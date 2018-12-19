@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>compiler</title>
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+            <!--
+        <p>
+          <div class="code-view-line-num">1</div>
+          <div class="code-view-line-num-space"></div>
+          <span class="highlight-key-type">int</span>
+          <span class="highlight-id">main</span>
+          <span class="highlight-symbol">{</span>
+        </p>
+        <p>
+          <div class="code-view-line-num">2</div>
+          <div class="code-view-line-num-space"></div>
+          <span class="highlight-symbol">}</span>
+        </p>
+        -->
+    <button id="file" class="tool-button">open</button>
+    <button id="c-button" class="tool-button">compiler</button>
+    <button id="s-button" class="tool-button">select spim</button>
+    <div id="left-code-view-container" class="code-view-container">
+        <div id="left-select-button-container" class="cs-button-container">
+          <button class="cs-button">source</button>
+          <button class="cs-button">token</button>
+          <button class="cs-button">ir</button>
+          <button class="cs-button">better-ir</button>
+          <button class="cs-button">asm</button>
+        </div>
+        <div id="token-code-view" class="code-view"></div>
+        <div id="better-ir-code-view" class="code-view"></div>
+        <div id="source-code-view" class="code-view"></div>
+    </div>
+    <div id="right-code-view-container" class="code-view-container">
+        <div id="right-select-button-container" class="cs-button-container">
+            <button class="cs-button">source</button>
+            <button class="cs-button">token</button>
+            <button class="cs-button">ir</button>
+            <button class="cs-button">better-ir</button>
+            <button class="cs-button">asm</button>
+          </div>
+        <div id="ir-code-view" class="code-view"></div>
+        <div id="asm-code-view" class="code-view"></div>
+    </div>
+    <!--<div id="code-view-container" class="code-view-container">
+      <div id="source-code-view" class="code-view">
+
+      </div>
+      <div id="ir-code-view" class="code-view"></div>
+      <div id="asm-code-view" class="code-view"></div>
+    </div>
+  -->
+    <div id="error-view-container" class="error-view-container">
+      <div class="e-top">
+        <div class="e-top-line">Line</div>
+        <span class="e-func-span">Message</span>
+      </div>
+      <div id="error-view"></div>
+    </div>
+  </body>
+  <script type="text/javascript" src="for-compoler.js" type="module"></script>
+</html>
