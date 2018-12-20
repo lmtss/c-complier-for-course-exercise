@@ -50,6 +50,7 @@ void FrontEndInterface::adjust() {
 }
 
 void FrontEndInterface::print() {
+	std::cout << "---------------OPTIMIZE--------------" << std::endl;
 	for (vector<IRNode*>::iterator it = ir_list.begin(); it != ir_list.end();it++) {
 		if ((*it)->label != NULL) {
 			std::cout << "L" << (*it)->label->index << ": ";

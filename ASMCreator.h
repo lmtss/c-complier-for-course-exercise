@@ -44,7 +44,7 @@ private:
 	void create_assign(IRNode *ir);
 	void create_asmd(IRNode *ir);
 	void create_print(IRNode *ir);
-	void create_input(IRNode *ir);
+	void create_input(IRNode *ir, IRNode *next);
 	void create_jump(IRNode *ir);
 
 	void create_array_assign(IRNode *ir);

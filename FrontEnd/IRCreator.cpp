@@ -199,7 +199,7 @@ void IRCreator::print_json() {
 // private
 void IRCreator::addIRNode(IRNode *node) {
 	//std::cout << "IR: ";
-	node->print();
+	//node->print();
 	node->next = NULL;
 	
 	node->scope = stm->getCurTable();
@@ -628,7 +628,7 @@ bool IRCreator::handle_in_state() {
 }
 
 bool IRCreator::handle_array_use() {
-	std::cout << "sss";
+	
 	int start_index = sp_top(), fin_index = ss_len();
 	SSNode *node = ss_get(start_index), *index_node = ss_get(start_index + 1);
 	VarNode *var = NULL;
@@ -636,10 +636,10 @@ bool IRCreator::handle_array_use() {
 	if (var->varType->index < 4) {
 		return false;
 	}
-	std::cout << "AAAAAAAAAAAAAA";
+	
 	IRNode *ir = new IRNode(IRType::array_use, NULL);
 	ir->setArg(1, var);
-	set_arg(ir, 0, index_node);
+	_set_arg(ir, 0, index_node);
 
 	for (int i = start_index; i < fin_index; i++) {
 		ss_pop();
@@ -653,5 +653,36 @@ bool IRCreator::handle_array_use() {
 
 	ss_push(new SSNode(temp));
 
+	return true;
+}
+
+bool IRCreator::handle_in_arg() {
+	int start_index = sp_top(), fin_index = ss_len();
+	VarNode *id = NULL;
+	_handle_var_undecl(id, ss_get(start_index));
+
+	if (fin_index - start_index == 1) {// var
+		IRNode *ir = new IRNode(IRType::input, NULL);
+		ir->setArg(0, id);
+		addIRNode(ir);
+	}
+	else {// array
+		IRNode *ir = new IRNode(IRType::input, NULL);
+
+		TempNode *temp = new TempNode(temp_top_index++);
+		stm->insert(temp);
+		ir->setArg(0, temp);
+		addIRNode(ir);
+
+		ir = new IRNode(IRType::array_assign, NULL);
+		ir->setArg(2, id);
+		_set_arg(ir, 1, ss_get(start_index + 1));
+		ir->setArg(0, temp);
+		addIRNode(ir);
+	}
+
+	for (int i = start_index; i < fin_index; i++) {
+		ss_pop();
+	}
 	return true;
 }

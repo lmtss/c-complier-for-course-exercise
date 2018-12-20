@@ -212,7 +212,14 @@ void ASMCreator::create_block(int start, int end) {
 				create_print(ir);
 				break;
 			case IRType::input:
-				create_input(ir);
+				if (ir->args[0].type == IRAType::temp) {
+					//create_input(ir, FEI->getIR(++i));
+					create_input(ir, NULL);
+				}
+				else {
+					create_input(ir, NULL);
+				}
+				
 				break;
 			case IRType::ret:
 				create_return(ir);
@@ -531,18 +538,33 @@ void ASMCreator::create_print(IRNode *ir) {
 	
 }
 
-void ASMCreator::create_input(IRNode *ir) {
+void ASMCreator::create_input(IRNode *ir, IRNode *next) {
 
-	VarNode *var = ir->args[0].getVar();
-	out << "li" << "$v0" << 5 << endl;
-	out << "syscall" << endl;
-	if (var->at_reg) {
-		out << "move" << reg_strs[var->reg_index] << "$v0" << endl;
+	if (ir->args[0].type == IRAType::var) {
+		VarNode *var = ir->args[0].getVar();
+		out << "li" << "$v0" << 5 << endl;
+		out << "syscall" << endl;
+		if (var->at_reg) {
+			out << "move" << reg_strs[var->reg_index] << "$v0" << endl;
+		}
+		else {
+			out << "sw" << "$v0" << var_offset(var) << endl;
+			//out << "move" << reg_strs[r] << "$v0" << endl;
+		}
 	}
 	else {
-		out << "sw" << "$v0" << var_offset(var) << endl;
-		//out << "move" << reg_strs[r] << "$v0" << endl;
-	}	
+		TempNode *t = ir->args[0].temp;
+		out << "li" << "$v0" << 5 << endl;
+		out << "syscall" << endl;
+		if (t->at_reg) {
+			out << "move" << reg_strs[t->reg_index] << "$v0" << endl;
+		}
+		else {
+			out << "sw" << "$v0" << var_offset(t) << endl;
+			//out << "move" << reg_strs[r] << "$v0" << endl;
+		}
+	}
+	
 }
 
 void ASMCreator::create_func(IRNode *ir) {

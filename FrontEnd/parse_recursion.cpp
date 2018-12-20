@@ -384,8 +384,8 @@ bool Parser::parse_print_state() {
 
 bool Parser::parse_in_state() {
 	irc->new_sp();
-	HE(parse_call_arg_list());
-	HE(irc->handle_in_state());
+	HE(parse_in_arg_list());
+	//HE(irc->handle_in_state());
 	irc->pop_sp();
 	return true;
 }
@@ -783,6 +783,40 @@ bool Parser::parse_for_state() {
 	HE(parse_state());
 	irc->handle_for_state_3();
 	irc->handle_while_state();
+	irc->pop_sp();
+	return true;
+}
+
+bool Parser::parse_in_arg_list() {
+	irc->new_sp();
+	HE(parse_in_arg());
+	while (expect_token() == Token::comma) {
+		get_token();
+		HE(parse_in_arg());
+	}
+	expect_clear();
+	irc->pop_sp();
+	return true;
+}
+bool Parser::parse_in_arg() {
+	irc->new_sp();
+
+	expect(Token::identifier);
+	if (expect_token() == Token::LSB) {
+		SSNode *node = val();
+		node->type = SSType::array;
+		irc->ss_push(node);
+		get_token();
+
+		HE(parse_assign_exp());
+
+		expect(Token::RSB);
+	}
+	else {
+		expect_clear();
+		irc->ss_push(val());
+	}
+	HE(irc->handle_in_arg());
 	irc->pop_sp();
 	return true;
 }

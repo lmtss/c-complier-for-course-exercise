@@ -588,6 +588,7 @@ public:
 	bool handle_return_state();
 	bool handle_print_state();
 	bool handle_in_state();
+	bool handle_in_arg();
 	bool handle_state();
 	// logic
 	bool handle_logic_exp();

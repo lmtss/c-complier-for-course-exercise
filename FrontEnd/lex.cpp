@@ -236,11 +236,16 @@ Token Lex::lex() {
 		if (c == '\t')
 			c = ' ';
 		LexState res = table[(int)curState][c];
+		if (curState == LexState::d_4 && res == LexState::Start) {
+			bufPos = 0;
+			yytext[bufPos] = '\0';
+		}
 		if ((int)res >= 100 && res < LexState::error) {
 			if ((int)res < 120 && res != LexState::char_const || res >= LexState::greater || res == LexState::divide) {
 				needBack = true;
 				charBack = c;
 				yytext[bufPos] = '\0';
+				
 			}
 			else {
 				yytext[bufPos] = c;
