@@ -1,4 +1,4 @@
-### IRCreator.h 语义分析头文件
+## IRCreator.h 语义分析头文件
 ```cpp
 class IRCreator {
 public:
@@ -52,7 +52,7 @@ public:
 	bool handle_for_state_3();
 	bool handle_array_use();
   
-  // 用于回填
+  	// 用于回填
 	bool is_parse_if = false;
 	bool is_parse_else = false;
 	bool is_parse_if_end = false;
@@ -83,4 +83,36 @@ private:
 
 };
 
+```
+## ASMCreator.h 汇编代码生成头文件
+```cpp
+class ASMCreator {
+public:
+	void create_head();// 创建汇编头部(数据段等等)
+	void create_block(int start, int end);// 按照区间生成汇编
+private:
+	// 生成函数，对应每一种中间代码
+	void create_func(IRNode *ir); 
+	void create_assign(IRNode *ir);
+	void create_asmd(IRNode *ir);
+	void create_print(IRNode *ir);
+	void create_input(IRNode *ir, IRNode *next);
+	void create_jump(IRNode *ir);
+	void create_array_assign(IRNode *ir);
+	void create_array_use(IRNode *ir);
+	void create_param_in(IRNode *ir);
+	void create_call(IRNode *ir);
+	void create_call_fin();
+	void create_return(IRNode *ir);
+
+	int load_store(IRNode *ir, int i, bool use_t9);// 处理变量读取/存储
+	void store(VarNode *var);// 变量存储
+	void handle_t9(int imm);// 将立即数imm存入$t9
+	void handle_t9(VarNode *var, int add);// 将变量var存入$t9 或 将数组元素的地址存入$t9
+	int var_offset(VarNode *var);// 获取变量偏移量
+	int var_offset(TempNode *temp);// 获取临时变量偏移量
+
+	ASMOut out;// 输出流
+	
+};
 ```
