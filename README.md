@@ -4,6 +4,7 @@ c-complier for course exercise
 ## 进度
 * - [ ] 前端
   * - [x] 函数
+  * - [x] 数组
   * - [ ] 控制流
     * - [x] if
     * - [ ] while
@@ -16,8 +17,10 @@ c-complier for course exercise
       * - [ ] continue
     * - [ ] switch
 * - [ ] 后端
-  * - [ ] 四元式优化-DAG
-  * - [ ] 基本块分配
+  * - [x] 四元式优化-DAG
+  * - [x] 基本块分配
+  * - [ ] 寄存器分配
+  * - [x] 目标代码生成
 ## 支持的语法
 参考c-BNF
 #### 声明&函数定义
@@ -34,6 +37,7 @@ init-declarator = declarator {= initializer}?
 
 declarator = id
            | id ( {decl-param-list}? )
+	   | id [ assign-exp ]
 
 initializer = assign-exp
 
@@ -74,6 +78,7 @@ exp = assign-exp {, assign-exp}*
 assign-exp = {assign-left "="}* additive-exp
 
 assign-left = id
+            | id [ assign-exp ]
 
 additive-exp = multiplicative_exp {{+|-} multiplicative_exp}*
 
@@ -81,6 +86,7 @@ multiplicative_exp = postfix-exp {{*|/} postfix-exp}*
 
 postfix-exp = primary-exp
             | id ( {call-arg-list}? )
+	    | id [ assign-exp ]
 primary-exp = id
             | const
             | ( assign-exp )
