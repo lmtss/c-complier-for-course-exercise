@@ -203,6 +203,7 @@ void IRCreator::addIRNode(IRNode *node) {
 	node->next = NULL;
 	
 	node->scope = stm->getCurTable();
+	node->func = stm->getCurFunc();
 	//node->print();
 	//std::cout << node->scope << std::endl;
 	if (!expect_for_exp_3) {

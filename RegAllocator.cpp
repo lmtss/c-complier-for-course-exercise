@@ -205,8 +205,10 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 				TempNode *temp = ir->args[1].temp;
 				temp->live_start = i;
 				unhandled.push(temp);
-				//if (temp->live_end == 0)
-					temp->live_end = i+1;
+				
+				temp->live_end = i+1;
+				ir->func->addTemp(temp);
+				
 			}
 		}
 		else if (ir->type == IRType::array_assign) {

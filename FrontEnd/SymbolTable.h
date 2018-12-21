@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include<iostream>
 
 using namespace std;
 
@@ -77,11 +78,18 @@ struct FuncNode : IDNode {
 	int param_num;
 	vector<VarNode*> paraList;
 	SymbolTable *table;
+	vector<TempNode*> need_store_temp_list;
 
 	//int cur_address = 0;
 	int size = 0;
 	int max_arg_size = 0;
 	int var_num = 0;
+
+	void addTemp(TempNode *temp) {
+		need_store_temp_list.push_back(temp);
+		temp->stack_address = size;
+		size += 4;
+	}
 };
 
 class SymbolTable {
@@ -101,9 +109,9 @@ public:
 	void back_traverse(function<void(VarNode*)> func) {
 		traverse(func);
 		SymbolTable *scope = father;
-		while (father->father != NULL) {
-			father->traverse(func);
-			father = father->father;
+		while (scope->father != NULL) {
+			scope->traverse(func);
+			scope = scope->father;
 		}
 	}
 
@@ -137,6 +145,17 @@ public:
 	}
 	//FuncNode* insertFunc(string& name, )
 	void insertFunc(FuncNode *f);
+
+	void func_traverse(function<void(VarNode*)> func) {
+		map<string, FuncNode*>::iterator it;
+		it = funcTable.begin();
+		
+		while (it != funcTable.end()) {
+			cout << it->second->name << endl;
+			it->second->table->traverse(func);
+			it++;
+		}
+	}
 
 	TypeNode *getBasicType(int i);
 

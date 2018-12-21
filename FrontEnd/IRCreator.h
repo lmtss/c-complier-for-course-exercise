@@ -166,6 +166,7 @@ struct IRNode {
 	
 	int index_for_lsa = 0;
 	SymbolTable *scope = NULL;
+	FuncNode *func = NULL;
 	IRNode() {
 		type = IRType::add;
 		next = NULL;
