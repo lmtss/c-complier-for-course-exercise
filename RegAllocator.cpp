@@ -235,6 +235,13 @@ void RegAllocator::temp_lsa(int start_index, int end_index) {
 				temp->live_end = i;
 			}
 		}
+		else if (ir->type == IRType::input && ir->args[0].type == IRAType::temp) {
+			TempNode *temp = ir->args[0].temp;
+			if (temp->live_start == 0) {
+				temp->live_start = i;
+				unhandled.push(temp);
+			}
+		}
 	}
 
 

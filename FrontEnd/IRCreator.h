@@ -104,6 +104,9 @@ struct IRArg {
 			case IRAType::char_imm:
 				return char_imm == b.char_imm;
 				break;
+			case IRAType::array:
+				return id == b.id;
+				break;
 			default:
 				return false;
 				break;
@@ -129,6 +132,9 @@ struct IRArg {
 				break;
 			case IRAType::char_imm:
 				return char_imm < char_imm;
+				break;
+			case IRAType::array:
+				return id < b.id;
 				break;
 			default:
 				return false;
@@ -495,29 +501,28 @@ public:
 	void setSTM(STManager *s);
 
 	void expState();
-	// expect => IR
 	void funcExpect();
 	void meetRCB();
-	void enter_scope() {
+	void enter_scope() {// 进入一个作用域
 		stm->addTable(BlockType::white_block);
 	}
 
 
-	void print();
-	void print_json();
+	void print();// 以普通控制台格式打印
+	void print_json();// 以json格式输出
 
 	void clear_temp() {
 		//temp_top_index = 0;
 	}
 
 
-	void new_sp() {
+	void new_sp() {// 创建一个锚点，用于错误回复等。
 		ss_sp_stack[ss_sp_index++] = ss_index;
 	}
 	int sp_get(int i){ return ss_sp_stack[ss_sp_index - 1 - i]; }
 	int sp_top() { return ss_sp_stack[ss_sp_index - 1]; }
 
-	void pop_sp() { ss_sp_index--; }
+	void pop_sp() { ss_sp_index--; }// 取消一个锚点
 	void ss_wrong_re() {
 		for (int i = sp_top(); i < ss_len(); i++) {
 			if (ss_stack[i] != NULL) {
@@ -541,12 +546,12 @@ public:
 
 
 
-	void ss_push(SSNode *n) {
+	void ss_push(SSNode *n) {// 语义栈push
 		ss_stack[ss_index++] = n;
 	}
 	int ss_len() { return ss_index; }
-	SSNode *ss_top() { return ss_stack[ss_index - 1]; }
-	void ss_pop() { 
+	SSNode *ss_top() { return ss_stack[ss_index - 1]; }// 语义栈top
+	void ss_pop() { // 语义栈pop
 		SSNode *d = ss_stack[ss_index-1];
 
 		ss_stack[ss_index-1] = NULL;
@@ -554,22 +559,6 @@ public:
 		ss_index--;
 	}
 	SSNode *ss_get(int i) { return ss_stack[i]; }
-
-	/*void jump_stack_push(IRNode *ti, IRNode *fi) {
-		true_jump_stack[jump_stack_index] = ti;
-		false_jump_stack[jump_stack_index] = fi;
-		jump_stack_index++;
-	}
-	IRNode *js_true_get(int i) { return true_jump_stack[i]; }
-	IRNode *js_false_get(int i) { return false_jump_stack[i]; }
-
-	void js_new_sp() {
-		js_sp_stack[js_sp_index++] = jump_stack_index;
-	}
-	void js_pop_sp() {
-		js_sp_index--;
-	}
-	int js_sp_top() { return js_sp_stack[js_sp_index - 1]; }*/
 	// parse error
 	void handle_token_error(int line, Token t);
 
@@ -657,19 +646,19 @@ private:
 
 	int temp_top_index = 0;// 当前temp
 
-	std::vector<SSNode*> ss_stack;
+	std::vector<SSNode*> ss_stack;// 语义栈
 	int ss_index = 0;
 	std::vector<int> ss_sp_stack;
 	int ss_sp_index = 0;
 
-	std::map<IRNode*, LabelNode*> label_map;
+	std::map<IRNode*, LabelNode*> label_map;// 标签map
 	int label_index = 0;
 
 	bool has_return = false;
 	bool is_void_func = false;
 
-	void addIRNode(IRNode *node);
-	void addGlobalInit(IRNode *ir);
+	void addIRNode(IRNode *node);// 处理新生成中间代码。处理回填。
+	void addGlobalInit(IRNode *ir);// 将全局变量相关的代码转移位置，方便后端处理。
 
 	void delete_ir_node(IRNode *node) {
 		IRNode *fro = node->front, *next = node->next;
@@ -683,7 +672,7 @@ private:
 		delete node;
 	}
 
-	bool set_arg(IRNode *ir, int index, SSNode *n) {
+	bool set_arg(IRNode *ir, int index, SSNode *n) {// 一个方便的设定中间代码参数的函数
 		if (n->type == SSType::identifier) {
 			VarNode *var = NULL;
 			_handle_var_undecl(var, n);
@@ -705,7 +694,7 @@ private:
 		return true;
 	}
 
-	void label_finish(LabelNode *label) {
+	void label_finish(LabelNode *label) {// 完成一个跳转标签，即回填。保证同一个代码不会有两个跳转标签。
 		IRNode *target = label->target;
 		std::map<IRNode *, LabelNode *>::const_iterator it;
 		it = label_map.find(target);

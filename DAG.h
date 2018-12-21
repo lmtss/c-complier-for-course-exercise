@@ -1,7 +1,7 @@
 #include "FrontEndInterface.h"
 
 string ops[] = {
-	"add", "sub", "mult", "div", "assign","func_call","input","print"
+	"add", "sub", "mult", "div", "assign","ret","func_call","input","print","array_assign", "array_use"
 };
 
 //DAG结点
@@ -10,7 +10,7 @@ struct DNode {
 	bool isuseful;	//是否有用
 	IRType ir;	//运算符
 	int M;	//主标记的下标
-	vector<IRArg> A;	//标记(包含主标记),存引用
+	vector<IRArg> A;	//标记(包含主标记)
 	vector<int> oprs;  //后继结点下标
 	vector<int> pioneer; //前驱结点下标
 	DNode(IRType ir) :
@@ -19,6 +19,7 @@ struct DNode {
 			oprs.push_back(-1);
 			isuseful = false;
 		}
+
 	void print() {
 		cout << "op: " << ops[(int)ir] << '|';
 		A[M].print();
@@ -571,6 +572,232 @@ inline void DAG::optimize(){
 
 				curNode.isRoot = true;
 			}
+			else if (curIR->type == IRType::array_use) {
+
+				//搜索两个操作数
+
+				auto find0 = block.mIR.find(curIR->args[0]);
+				int index0;
+				if (find0 == block.mIR.end()) {
+					//结点不存在,新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[0]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[0]);//加入标记
+					curNode.M = 0;	//主标记
+
+					index0 = _size;	//更新index值
+				}
+				else {
+					index0 = find0->second;
+				}
+
+
+				auto find1 = block.mIR.find(curIR->args[1]);
+				int index1;
+				if (find1 == block.mIR.end()) {
+					//结点不存在,新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[1]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[1]);//加入标记
+					curNode.M = 0;	//主标记
+
+					index1 = _size;	//更新index值
+				}
+				else {
+					index1 = find1->second;
+				}
+
+				//引用结点
+				DNode& curNode0 = block.nodes[index0];
+
+
+				int index = -1;
+				//搜索是否存在赋值结点
+				int cursizej = curNode0.pioneer.size();
+				for (int j = 0; j < cursizej; ++j) {
+					if (block.nodes[curNode0.pioneer[j]].ir == IRType::array_assign) {
+						//如果找到运算符为数组赋值的;
+						if (block.nodes[curNode0.pioneer[j]].oprs[1] == index1) {
+							//找到
+							index = curNode0.pioneer[j];
+							break;
+						}
+					}
+				}
+
+				if (index == -1) {
+					//没有被赋值过，新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[2]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(curIR->type)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[2]);//加入标记
+					curNode.M = 0;	//主标记
+
+					//引用结点
+					DNode& curNode0 = block.nodes[index0];
+					DNode& curNode1 = block.nodes[index1];
+
+					//添加前驱后继
+
+					//后继
+					curNode.oprs[0] = index0;
+					curNode.oprs[1] = index1;
+
+					//前驱
+					curNode0.pioneer.push_back(_size);
+					curNode1.pioneer.push_back(_size);
+
+					//设为根结点
+					curNode.isRoot = true;
+					curNode0.isRoot = false;
+					curNode1.isRoot = false;
+				}
+				else {
+					//cout << "fuck" << endl;
+					//如果被赋值过，变为简单赋值结点
+					curIR->type = IRType::assign;
+					curIR->args[1] = curIR->args[2];
+					curIR->args[0] = block.nodes[index].A[block.nodes[index].M];
+
+					//重新扫描
+					i--;
+				}
+
+			}
+			else if (curIR->type == IRType::array_assign) {
+				//搜索两个操作数
+
+				auto find0 = block.mIR.find(curIR->args[1]);
+				int index0;
+				if (find0 == block.mIR.end()) {
+					//结点不存在,新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[1]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[1]);//加入标记
+					curNode.M = 0;	//主标记
+
+					index0 = _size;	//更新index值
+				}
+				else {
+					index0 = find0->second;
+				}
+
+
+				auto find1 = block.mIR.find(curIR->args[2]);
+				int index1;
+				if (find1 == block.mIR.end()) {
+					//结点不存在,新建结点
+					int _size = block.nodes.size();
+
+					//更新map
+					block.mIR[curIR->args[2]] = _size;
+
+					//更新nodes
+					block.nodes.push_back(DNode(IRType::assign)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[2]);//加入标记
+					curNode.M = 0;	//主标记
+
+					index1 = _size;	//更新index值
+				}
+				else {
+					index1 = find1->second;
+				}
+
+
+				//引用结点
+				DNode& curNode0 = block.nodes[index0];
+
+
+				int index = -1;
+				//搜索是否存在赋值结点
+				int cursizej = curNode0.pioneer.size();
+				for (int j = 0; j < cursizej; ++j) {
+					if (block.nodes[curNode0.pioneer[j]].ir == IRType::array_assign) {
+						//如果找到运算符为数组赋值的;
+						if (block.nodes[curNode0.pioneer[j]].oprs[1] == index1) {
+							//找到
+							index = curNode0.pioneer[j];
+							break;
+						}
+					}
+				}
+
+				if (index == -1) {
+					//新建结点
+
+					auto find = block.mIR.find(curIR->args[0]);
+					if (find != block.mIR.end()) {
+						curIR->args[0] = block.nodes[find->second].A[block.nodes[find->second].M];
+					}
+
+					int _size = block.nodes.size();
+
+					//更新nodes
+					block.nodes.push_back(DNode(curIR->type)); //创建一个结点
+					DNode& curNode = block.nodes[_size]; //引用当前结点
+
+					curNode.A.push_back(curIR->args[0]);//加入标记
+					curNode.M = 0;	//主标记
+
+					//引用结点
+					DNode& curNode0 = block.nodes[index0];
+					DNode& curNode1 = block.nodes[index1];
+
+					//添加前驱后继
+
+					//后继
+					curNode.oprs[0] = index0;
+					curNode.oprs[1] = index1;
+
+					//前驱
+					curNode0.pioneer.push_back(_size);
+					curNode1.pioneer.push_back(_size);
+
+					//设为根结点
+					curNode.isRoot = true;
+					curNode0.isRoot = false;
+					curNode1.isRoot = false;
+				}
+				else {
+					//已有，添加
+					auto find = block.mIR.find(curIR->args[0]);
+					if (find != block.mIR.end()) {
+						curIR->args[0] = block.nodes[find->second].A[block.nodes[find->second].M];
+					}
+					DNode& curNode = block.nodes[index]; //引用当前结点
+
+					curNode.A[0] = curIR->args[0];
+				}
+			}
 		}
 		
 		//block.print();
@@ -580,7 +807,7 @@ inline void DAG::optimize(){
 		while (length <= block.end) {
 			//绕过其他四元式
 			IRNode* curIR = FEI->ir_list[length]; //当前扫描到的四元式
-			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::print|| curIR->type == IRType::input) {
+			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::print|| curIR->type == IRType::input|| curIR->type == IRType::array_assign|| curIR->type == IRType::array_use) {
 				break;
 			}
 			else {
@@ -598,7 +825,7 @@ inline void DAG::optimize(){
 		for (int i = 0; i < block.nodes.size(); ++i) {
 			DNode& curNode = block.nodes[i];	//当前结点
 			if (curNode.isRoot == true) {
-				if (curNode.A[curNode.M].type == IRAType::int_imm|| curNode.ir == IRType::input)
+				if (curNode.A[curNode.M].type == IRAType::int_imm|| curNode.ir == IRType::input||curNode.ir == IRType::array_assign)
 					curNode.isuseful = true;
 				else if (curNode.A[curNode.M].type == IRAType::var|| curNode.A[curNode.M].type == IRAType::temp) {
 					int ok = 0;
@@ -642,13 +869,22 @@ inline void DAG::optimize(){
 
 		for (int i = 0; i < block.nodes.size(); ++i) {
 			//由小到大逐个扫描结点
-
 			DNode& curNode = block.nodes[i];	//当前结点
 
 			if (curNode.isuseful) {
 				//首先做运算
 				if (curNode.oprs[0] != -1 && curNode.ir != IRType::print) {
-					if (curNode.ir != IRType::func_call) {
+					if (curNode.ir == IRType::array_assign) {
+						//替换操作符
+						FEI->ir_list[length]->type = curNode.ir;
+
+						//替换操作数
+						FEI->ir_list[length]->args[2] = block.nodes[curNode.oprs[1]].A[block.nodes[curNode.oprs[1]].M];
+						FEI->ir_list[length]->args[1] = block.nodes[curNode.oprs[0]].A[block.nodes[curNode.oprs[0]].M];
+						FEI->ir_list[length]->args[0] = curNode.A[curNode.M];
+						
+					}
+					else if (curNode.ir != IRType::func_call) {
 						//替换操作符
 						FEI->ir_list[length]->type = curNode.ir;
 
@@ -730,7 +966,7 @@ inline void DAG::optimize(){
 		//删除无用四元式
 		while (length <= block.end) {
 			IRNode* curIR = FEI->ir_list[length]; //当前扫描到的四元式
-			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::func_param_in|| curIR->type == IRType::print|| curIR->type == IRType::input) {
+			if (curIR->type == IRType::assign || curIR->type == IRType::add || curIR->type == IRType::sub || curIR->type == IRType::mult || curIR->type == IRType::div|| curIR->type == IRType::func_call|| curIR->type == IRType::func_param_in|| curIR->type == IRType::print|| curIR->type == IRType::input|| curIR->type == IRType::array_assign|| curIR->type == IRType::array_use) {
 				curIR->type = IRType::null;
 			}
 			else {
@@ -759,8 +995,8 @@ inline void DAG::optimize(){
 		}
 	}
 
+
 	//删除全部空四元式
-	vector<IRNode*>::iterator it2;
 	for (vector<IRNode*>::iterator it = FEI->ir_list.begin(); it != FEI->ir_list.end();) {
 		if ((*it)->type == IRType::null) {
 			it = FEI->ir_list.erase(it);

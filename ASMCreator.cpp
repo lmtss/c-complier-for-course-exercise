@@ -267,7 +267,7 @@ int ASMCreator::var_offset(VarNode *var) {
 		return -(creating_def_func->size + var->arg_index * 4);
 	}
 	else {
-		return -(creating_def_func->size - 8 - var->stack_address - 4);
+		return -(creating_def_func->size - 8 - var->stack_address);
 	}
 }
 
@@ -548,7 +548,13 @@ void ASMCreator::create_input(IRNode *ir, IRNode *next) {
 			out << "move" << reg_strs[var->reg_index] << "$v0" << endl;
 		}
 		else {
-			out << "sw" << "$v0" << var_offset(var) << endl;
+			if (var->level == 0) {
+				out << "sw" << "$v0" << var_offset(var) << "($fp)" << endl;
+			}
+			else {
+				out << "sw" << "$v0" << var->name << endl;
+			}
+			
 			//out << "move" << reg_strs[r] << "$v0" << endl;
 		}
 	}
