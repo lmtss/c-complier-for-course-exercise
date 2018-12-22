@@ -3,6 +3,7 @@ const os = require('os')
 const {dialog} = require('electron').remote
 const fs = require('fs')
 const cp = require('child_process')
+const DarkHole = require('./DH-webgl2/index').DarkHole
 
 const LexState = require('./lex').LexState
 const Lex = require('./lex').Lex
@@ -19,9 +20,11 @@ const lcvc = document.getElementById("left-code-view-container");
 const rcvc = document.getElementById("right-code-view-container");
 
 var curP = null;
+//var filePath = null;
 var compilerFilePath = null;
 var curErrorFunc = "";
 var spimPath = 'D:/item/spim/QtSpim.exe';
+var codeMirror = null;
 const iniPath = 'option.json';
 
 spimPath = JSON.parse(fs.readFileSync(iniPath)).spimPath;
@@ -77,6 +80,7 @@ const showCompilerOut = function(json){
 }
 
 const showSourceCode = function(str){
+    codeMirror.setValue(str);
     let codeArr = str.split("\n");
     for(v of codeViewList){
         v.innerHTML = "";
@@ -341,7 +345,7 @@ const showASMCode = function(asm){
                 leftSpace.classList.add("asm-left-space");
                 curP.appendChild(leftSpace);
                 let span = document.createElement("span");
-                //span.classList.add("highlight-asm-op");
+                span.classList.add("highlight-asm-g");
                 span.innerHTML = str;
                 curP.appendChild(span);
             }
@@ -353,6 +357,8 @@ const showASMCode = function(asm){
         document.getElementById("asm-code-view").appendChild(curP);
     }
 }
+
+
 
 const selectEventHandler = function(e){
     let buttons = this.getElementsByTagName("button");
@@ -377,24 +383,26 @@ const selectEventHandler = function(e){
     }
 }
 
-let filePath = "";
+const selectSource = function(){
+    openFileDialog("",function(res){
+        filePath = res[0];
+        compilerFilePath = res[0];
+        fs.readFile(filePath, function(err, data){
+          if(err){
+              return console.error(err);
+          }
+          console.log(data.toString());
+          showSourceCode(data.toString());
+          
+      });
+      
+    });
+}
+
+let filePath = null;
 let fileButton = document.getElementById("file");
 
-fileButton.addEventListener("click", function(){
-  openFileDialog("",function(res){
-      filePath = res[0];
-      compilerFilePath = res[0];
-      fs.readFile(filePath, function(err, data){
-        if(err){
-            return console.error(err);
-        }
-        console.log(data.toString());
-        showSourceCode(data.toString());
-        
-    });
-    
-    });
-});
+fileButton.addEventListener("click", selectSource);
 
 document.getElementById("s-button").addEventListener("click", function(){
     openFileDialog("",function(res){
@@ -411,7 +419,7 @@ document.getElementById("c-button").addEventListener("click",function(){
 
             document.getElementById("error-view-container").classList.remove("error-view-container-e");
         }
-        cp.execFile('CT4.exe', [compilerFilePath, 'output/asm.s', 'true'], function(err, stdout, stderr){
+        cp.execFile('CT4.exe', [compilerFilePath, 'output\\asm.s', 'true'], function(err, stdout, stderr){
             if(err) console.error(err);
             console.log('stdout',stdout);
             showCompilerOut(JSON.parse(stdout));
@@ -425,3 +433,69 @@ document.getElementById("c-button").addEventListener("click",function(){
 
 document.getElementById("left-code-view-container").addEventListener("click", selectEventHandler);
 document.getElementById("right-code-view-container").addEventListener("click", selectEventHandler);
+
+var anim = null;
+document.getElementById("start-page-sf").addEventListener("click",function(){
+    openFileDialog("",function(res){
+        filePath = res[0];
+        compilerFilePath = res[0];    
+        document.getElementById("sourceFileInput").value = filePath;  
+    });
+    
+});
+document.getElementById("start-page-button").addEventListener("click",function(){
+    if(filePath != null){
+        fs.readFile(filePath, function(err, data){
+            if(err){
+                return console.error(err);
+            }
+            showSourceCode(data.toString());
+            
+            document.getElementById("start-page").style.display = "none";
+            if(anim){
+                anim.pause();
+            }
+            
+        });
+    }
+    
+    
+});
+
+document.getElementById("e-button").addEventListener("click",function(){
+    let ec = document.getElementById("editor");
+    if(ec.classList.contains("editor-anim")){
+        ec.classList.remove("editor-anim");
+    }else{
+        ec.classList.add("editor-anim");
+    }
+});
+
+document.getElementById("cm-save").addEventListener("click",function(){
+    let str = codeMirror.getValue();
+    fs.writeFile(filePath, str, 'utf8', function(){});
+    showSourceCode(str);
+});
+
+const init = function(){
+    
+    codeMirror = CodeMirror(document.getElementById("editor"), {
+        value : "",
+        lineNumbers: true,
+        foldGutter: true,
+        mode : "text/x-csrc"
+    });
+    anim = new DarkHole({
+        hasFog : false,
+        canvasWidth : window.innerWidth*0.8,
+        canvasHeight : window.innerHeight * 0.8,
+        num : 20000
+    });
+    if(anim){
+        document.getElementById("start-page").appendChild(anim.DOM());
+        anim.play();
+        anim.DOM().classList.add("allScreen");
+    }
+    
+}
+init();

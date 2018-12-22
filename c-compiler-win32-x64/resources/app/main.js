@@ -1,14 +1,23 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Menu, MenuItem } = require('electron')
 
 
 let win
+var menu = null;
 
 function createWindow () {
   win = new BrowserWindow({ width: 1800, height: 900 })
 
   win.loadFile('index.html')
 
-  win.webContents.openDevTools()
+  //win.webContents.openDevTools()
+  Menu.setApplicationMenu(null);
+  menu = new Menu();
+  
+  var menuItem = new MenuItem({
+    role : "toggledevtools"
+  });
+  menu.append(menuItem);
+  Menu.setApplicationMenu(menu);
 
   win.on('closed', () => {
 

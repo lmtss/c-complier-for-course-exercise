@@ -273,9 +273,10 @@ class Lex{
 			//console.log(this.buf);
 			
 		}else{
-			if(ch != ' '){
+			/*if(ch != ' '){
 				this.buf += ch;
-			}
+			}*/
+			this.buf += ch;
 			this.curState = res;
 		}
 		/*console.log("=");
