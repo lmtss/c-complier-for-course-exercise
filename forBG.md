@@ -197,3 +197,14 @@ int main(int argc, char *argv[]) {// 参数格式为 源文件地址 汇编文�
 	return 0;
 }
 ```
+```cpp
+int a = 1;
+int arr[10];
+int gcd(int u, intv){...}
+int main(){
+  int c = 4;
+  for(a = 0; a < 10; a = a + 1){
+    int b = 2;
+  }
+}
+```
