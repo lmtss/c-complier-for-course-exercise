@@ -258,3 +258,27 @@ private:
 
 };
 ```
+```cpp
+//中间代码操作数
+struct IRArg {
+	int int_imm;
+	float float_imm;
+	int temp_index;
+	char char_imm;
+	TempNode *temp;
+	IDNode *id;
+	LabelNode *label;
+
+	IRAType type = IRAType::NONE;	
+};
+//中间代码
+struct IRNode {
+	IRArg args[3];//三个操作数
+	IRType type;
+	IRNode *next, *front;
+	LabelNode *label = NULL;//跳转标签
+	
+	SymbolTable *scope = NULL;//产生时所在的作用域
+	FuncNode *func = NULL;// 产生时位于的函数
+};
+```
