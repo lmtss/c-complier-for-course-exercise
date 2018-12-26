@@ -209,96 +209,52 @@ int main(){
 }
 ```
 ```cpp
+// 符号表类
 class SymbolTable {
 public:
-	SymbolTable(BlockType t, SymbolTable *f);
-	~SymbolTable();
-	VarNode* find(string& str) const;
-	void insert(string& name, VarNode *id);
-	void traverse(function<void(VarNode*)> func) {
-		map<string, VarNode*>::iterator it;
-		it = table.begin();
-		while (it != table.end()) {
-			func(it->second);
-			it++;
-		}
-	}
-	void back_traverse(function<void(VarNode*)> func) {
-		traverse(func);
-		SymbolTable *scope = father;
-		while (scope->father != NULL) {
-			scope->traverse(func);
-			scope = scope->father;
-		}
-	}
 
-	SymbolTable *father;
-	BlockType type;
-	map<string, VarNode*> table;
-private:
-	/*int cur_address = 0;
-	SymbolTable *func = NULL;*/
+	VarNode* find(string& str) const;// 插入变量
+	void insert(string& name, VarNode *id);// 插入变量
+	void traverse(function<void(VarNode*)> func);// 遍历自己的符号表
+	void back_traverse(function<void(VarNode*)> func); // 回溯遍历， 遍历当前符号表并沿父指针向上遍历符号表
+
+	SymbolTable *father;// 指向父符号表的指针
+	BlockType type;// 符号表类型， 可能是函数、for等等
+	map<string, VarNode*> table;// 变量表
 };
 
+//符号表管理类
 class STManager {
 public:
-	STManager();
-	~STManager();
-	void addTable(BlockType t);
-	SymbolTable* addFunc(FuncNode *func);
-	void exitScope();
+	void addTable(BlockType t);// 添加一个符号表并进入此符号表(进入新的作用域)
+	SymbolTable* addFunc(FuncNode *func);// 添加一个函数(进入新的作用域)
+	void exitScope();// 离开当前作用域
 
-	VarNode* find(string& str) const;
-	VarNode* findCurTable(string& str) const;
-	FuncNode* findFunc(string& str) const;
-	VarNode* insert(string& name, int level, TypeNode *type, int line);
-	void insert(string& name, int level, int len, int line);
+	VarNode* find(string& str) const;// 回溯查找
+	VarNode* findCurTable(string& str) const;// 仅在当前作用域查找
+	FuncNode* findFunc(string& str) const;// 查找函数
+	VarNode* insert(string& name, int level, TypeNode *type, int line);// 插入变量
+	void insert(string& name, int level, int len, int line);// 插入变量
 
-	void insert(int i) {
-		temp_list.push_back(new TempNode(i));
-	}
-	void insert(TempNode *temp) {
-		temp_list.push_back(temp);
-	}
-	//FuncNode* insertFunc(string& name, )
+	void insert(int i);// 插入临时变量
+	void insert(TempNode *temp);// 插入临时变量
 	void insertFunc(FuncNode *f);
 
-	void func_traverse(function<void(VarNode*)> func) {
-		map<string, FuncNode*>::iterator it;
-		it = funcTable.begin();
-		
-		while (it != funcTable.end()) {
-			cout << it->second->name << endl;
-			it->second->table->traverse(func);
-			it++;
-		}
-	}
+	void func_traverse(function<void(VarNode*)> func);// 遍历所有函数节点
 
-	TypeNode *getBasicType(int i);
+	TypeNode *getBasicType(int i);// 获取基本变量类型
 
-	int getCurLevel() {return curLevel;}
+	int getCurLevel() {return curLevel;}// 获取当前作用域层级
 	BlockType getCurBlockType() { return curTable->type; }
-	FuncNode *getCurFunc() { return curFunc; }
+	FuncNode *getCurFunc() { return curFunc; }// 获取当前函数
 	SymbolTable *getWholeTable() { return wholeTable; }
-	SymbolTable *getCurTable() { return curTable; }
+	SymbolTable *getCurTable() { return curTable; }// 获取当前符号表
 
 	vector<TempNode*> temp_list;
 private:
-	SymbolTable *wholeTable;
-	SymbolTable *curTable;
-	TypeNode *basicTypes[4];
-	FuncNode *curFunc;
-
-	int curLevel;
-	int curGlobalIndex;
 
 	int cur_type_index = 4;
-	
 	map<string, FuncNode*> funcTable;
-
-	TypeNode bTypes[4] = {
-		{"int", 4, 0},{ "float", 0, 1},{ "void", 0 , 2},{ "", 0 , 3}
-	};
 
 };
 ```
