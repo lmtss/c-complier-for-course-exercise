@@ -1,6 +1,11 @@
 c-complier for course exercise 
 =========================== 
 编译原理课设，使用递归下降
+## contributor
+| github  | 邮箱|
+| ---------- | -----------|
+| [https://github.com/lmtss](https://github.com/lmtss)   | 1224306181@qq.com   |
+| [https://github.com/Nekokir](https://github.com/Nekokir)   |    |
 ## 进度
 * - [ ] 前端
   * - [x] 函数
